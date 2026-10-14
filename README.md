@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href="README.en.md"><strong>🌍 English</strong></a> ·
-  <a href="docs/index.html"><strong>中英雙語圖文介紹</strong></a> ·
+  <a href="https://j0935586110-lgtm.github.io/TotemOps/"><strong>🌐 中英雙語圖文網站</strong></a> ·
   <a href="docs/ADVANCED_GUIDE.zh-TW.md">詳細使用手冊</a> ·
   <a href="https://github.com/j0935586110-lgtm/TotemOps/releases">版本下載</a>
 </p>

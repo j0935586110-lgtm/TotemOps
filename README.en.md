@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href="README.md"><strong>🌏 繁體中文</strong></a> ·
-  <a href="docs/index.html"><strong>Visual guide (中文 / English)</strong></a> ·
+  <a href="https://j0935586110-lgtm.github.io/TotemOps/?lang=en"><strong>🌐 Visual website (中文 / English)</strong></a> ·
   <a href="docs/ADVANCED_GUIDE.en.md">Full technical guide</a> ·
   <a href="https://github.com/j0935586110-lgtm/TotemOps/releases">Releases</a>
 </p>
