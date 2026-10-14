@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1926">
+  <meta name="description" content="不死圖騰 TotemOps：幫 Minecraft 服主看懂錯誤日誌、模組依賴與更新風險。開源、唯讀優先、有證據再修復。">
+  <title>不死圖騰 TotemOps — Minecraft 出問題，先找原因</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <style>
+    :root { color-scheme:dark; --bg:#081522; --surface:#102536; --surface2:#122c3d; --line:#294458; --white:#eaf7f7; --muted:#a1bdc9; --mint:#6bf4bd; --mint-strong:#34cf9f; --amber:#ffd095; --max:1160px; }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:linear-gradient(135deg,#07131f,#0b1b29 56%,#102331);color:var(--white);line-height:1.65}
+    a{color:var(--mint)}
+    a:hover{color:#a4ffdc}
+    button{font:inherit;cursor:pointer}
+    img{max-width:100%;height:auto}
+    [hidden]{display:none!important}
+    .wrap{width:min(var(--max),calc(100% - 40px));margin:auto}
+    .skip{position:absolute;left:-9999px;z-index:100}
+    .skip:focus{left:20px;top:15px;background:#fff;color:#000;padding:8px}
+    .header{position:sticky;top:0;z-index:5;backdrop-filter:blur(20px);background:rgba(7,19,31,.9);border-bottom:1px solid rgba(125,169,181,.24)}
+    .header-inside{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:75px}
+    .brand{display:flex;gap:12px;align-items:center;color:var(--white);text-decoration:none;font-weight:800;letter-spacing:-.5px;font-size:1.15rem}
+    .brand-mark{display:grid;place-items:center;background:linear-gradient(145deg,#4cdbab,#18a8ab);color:#0a2b33;width:40px;height:40px;border-radius:11px;font-size:1.5rem;box-shadow:0 0 26px #39b9a528}
+    .nav{display:flex;gap:25px;align-items:center}
+    .nav a{color:#bacfd4;text-decoration:none;font-weight:650;font-size:.91rem}
+    .nav a:hover{color:#fff}
+    .language{display:flex;gap:4px;padding:5px;border:1px solid #436372;border-radius:13px;background:#091d2c}
+    .language button{border:0;background:transparent;color:#a3b8c4;border-radius:9px;padding:7px 12px;font-weight:800;font-size:.9rem}
+    .language button[aria-pressed="true"]{background:var(--mint);color:#092a2c}
+    .intro{padding:72px 0 48px}
+    .eyebrow{font-size:.9rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mint);font-weight:800;margin:0 0 18px}
+    h1{font-size:clamp(2.5rem,5.6vw,4.7rem);line-height:1.17;letter-spacing:-.045em;margin:0;max-width:1000px}
+    .gradient{background:linear-gradient(94deg,#69f2bb,#98dafe);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .lead{font-size:clamp(1.08rem,2vw,1.26rem);max-width:790px;color:#c2d9df;margin:23px 0 28px}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+    .btn{min-height:47px;display:inline-flex;gap:9px;align-items:center;justify-content:center;padding:10px 22px;border-radius:11px;text-decoration:none;font-weight:800;border:1px solid #4d6b78;color:#edf6f8}
+    .btn.primary{color:#06272b;background:var(--mint);border-color:var(--mint)}
+    .btn:hover{transform:translateY(-1px);text-decoration:none}
+    .alert{padding:14px 18px;margin:28px 0 0;border-radius:11px;border:1px solid #8c7358;background:#51351e55;color:#f9ddb4;max-width:980px;font-size:.93rem}
+    .hero-img{border:1px solid #2d5262;border-radius:20px;overflow:hidden;margin:36px auto 0;box-shadow:0 20px 60px #0005;display:block;width:100%}
+    .figure-label{margin:9px 0 0;text-align:center;color:var(--muted);font-size:.81rem}
+    section.main-section{padding:55px 0 65px}
+    .kicker{font-weight:800;letter-spacing:.14em;color:var(--mint);font-size:.79rem;text-transform:uppercase}
+    h2{font-size:clamp(1.8rem,3vw,2.7rem);margin:8px 0 13px;letter-spacing:-.035em;line-height:1.24}
+    .section-lead{color:var(--muted);max-width:840px;margin:0 0 25px}
+    .pain-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .tile{background:linear-gradient(160deg,#132d3e,#0c2232);border:1px solid #2c495d;border-radius:16px;padding:24px;min-height:225px;display:flex;flex-direction:column;align-items:flex-start}
+    .tile .glyph{font-size:2rem;color:var(--mint);height:48px;line-height:1}
+    .tile h3{font-size:1.21rem;margin:12px 0 7px;line-height:1.36}
+    .tile p{font-size:.96rem;color:#c0d4db;margin:0 0 20px;flex:1}
+    .tag{display:inline-block;border:1px solid #2f795e;background:#163b33;color:#93f6bc;padding:4px 11px;border-radius:40px;font-size:.79rem;font-weight:750}
+    .tag.partial{border-color:#786849;background:#3a3426;color:#ffd59d}
+    .tag.todo{border-color:#56657a;background:#283349;color:#aabbe5}
+    .feature-layout{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
+    .feature-panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:30px}
+    .feature-panel p{color:var(--muted)}
+    .story{margin:0;padding:0;list-style:none;display:grid;gap:12px}
+    .story li{padding:15px 18px;border:1px solid #335268;border-radius:10px;background:#0b2132}
+    .story strong{color:var(--mint)}
+    .visual{margin-top:23px}
+    .visual img{width:100%;border-radius:14px;border:1px solid #365469}
+    .proof{border:1px solid #377761;background:linear-gradient(120deg,#14372e,#10303b);border-radius:17px;padding:26px}
+    .proof strong{color:#9bf7c8}
+    .proof p{margin:.5rem 0;color:#d5edf0}
+    .status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .status-col{border:1px solid var(--line);border-radius:15px;background:#0e2535;padding:23px}
+    .status-col h3{margin:0 0 15px;font-size:1.15rem;color:var(--mint)}
+    .status-col.todo h3{color:var(--amber)}
+    .status-col ul{padding-left:23px;margin:0}
+    .status-col li{margin:12px 0;color:#c6dbe2}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    .step{padding:20px;background:#102d3d;border:1px solid #294858;border-radius:14px}
+    .step code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.84rem;color:#c6fbe3;background:#061822;padding:10px;border-radius:7px;margin:11px 0}
+    .step h3{margin:4px 0;font-size:1.02rem}
+    .step p{color:#afcbd2;font-size:.91rem;margin:9px 0 0}
+    footer{border-top:1px solid #294858;padding:38px 0 48px;color:#b7cad3;font-size:.91rem}
+    .footerlinks{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:13px}
+    .footerlinks a{color:#b7d9de}
+    @media(max-width:900px){.pain-grid{grid-template-columns:repeat(2,1fr)}.feature-layout{grid-template-columns:1fr}.nav{gap:12px}.nav a{display:none}.steps{grid-template-columns:1fr}.intro{padding-top:55px}}
+    @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-inside{min-height:65px}.brand{font-size:1rem}.brand-mark{width:33px;height:33px}.language button{padding:7px 9px}.intro{padding-top:44px}.pain-grid,.status-grid{grid-template-columns:1fr}.tile{min-height:0}.actions{flex-direction:column}.btn{width:100%}.feature-panel{padding:19px}section.main-section{padding:36px 0}.alert{font-size:.9rem}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn:hover{transform:none}}
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip" data-i18n="skip">跳到主要內容</a>
+  <header class="header">
+    <div class="wrap header-inside">
+      <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">✦</span><span>TotemOps <span style="color:#90e9bd">不死圖騰</span></span></a>
+      <nav class="nav" aria-label="Site navigation">
+        <a href="#pain" data-i18n="navPain">解決什麼</a>
+        <a href="#how" data-i18n="navHow">怎麼運作</a>
+        <a href="#status" data-i18n="navStatus">做到哪裡</a>
+        <a href="#start" data-i18n="navStart">開始使用</a>
+      </nav>
+      <div class="language" role="group" aria-label="Language / 語言">
+        <button type="button" id="switch-zh" data-select-language="zh" aria-pressed="true" lang="zh-Hant" aria-label="切換繁體中文">中文</button>
+        <button type="button" id="switch-en" data-select-language="en" aria-pressed="false" lang="en" aria-label="Switch to English">English</button>
+      </div>
+    </div>
+  </header>
+  <main id="main">
+    <div id="top" class="wrap intro">
+      <p class="eyebrow" data-i18n="eyebrow">開源工具 · Minecraft 故障診斷</p>
+      <h1><span data-i18n="headline1">Minecraft 出問題？</span><br><span class="gradient" data-i18n="headline2">先找原因，再安全處理。</span></h1>
+      <p class="lead" data-i18n="lead">不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/j0935586110-lgtm/TotemOps" data-i18n="btnRepo">查看開源專案 ↗</a>
+        <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/releases/tag/v0.1.0-alpha.1" data-i18n="btnRelease">下載 Alpha 原始碼 ↗</a>
+      </div>
+      <div class="alert" data-i18n="alert">⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。</div>
+      <img class="hero-img" src="assets/totemops-hero.svg" width="1200" height="560" alt="Illustration: a Minecraft-style server's error log becomes a clear evidence-backed repair suggestion; not a real gameplay screenshot." decoding="async">
+      <p class="figure-label" data-i18n="heroCaption">原創示意插畫，非 Minecraft 遊戲截圖</p>
+    </div>
+
+    <section class="main-section" id="pain">
+      <div class="wrap">
+        <p class="kicker" data-i18n="painKicker">THE PAIN POINTS</p>
+        <h2 data-i18n="painTitle">你是不是也遇過這些麻煩？</h2>
+        <p class="section-lead" data-i18n="painLead">不想再一個個猜是什麼模組壞了、更新會不會讓整台伺服器不能玩？先從最常見的問題開始。</p>
+        <div class="pain-grid">
+          <article class="tile"><span class="glyph" aria-hidden="true">▤</span><h3 data-i18n="p1Title">伺服器突然開不了</h3><p data-i18n="p1Body">很長的錯誤日誌不知道看哪裡？幫你挑出關鍵錯誤，給出下一步檢查方向。</p><span class="tag" data-i18n="available">已可使用</span></article>
+          <article class="tile"><span class="glyph" aria-hidden="true">▥</span><h3 data-i18n="p2Title">模組一直衝突</h3><p data-i18n="p2Body">找出模組宣告的前置依賴、版本問題與相容性線索，不用只靠猜。</p><span class="tag" data-i18n="available">已可使用</span></article>
+          <article class="tile"><span class="glyph" aria-hidden="true">⇄</span><h3 data-i18n="p3Title">不敢隨便更新</h3><p data-i18n="p3Body">先檢查更新包內容和風險，再決定是否發布，不直接替你改檔案。</p><span class="tag partial" data-i18n="partial">部分可用</span></article>
+          <article class="tile"><span class="glyph" aria-hidden="true">⌕</span><h3 data-i18n="p4Title">想加玩法卻不知裝什麼</h3><p data-i18n="p4Body">依 Minecraft 與 Loader 版本找到候選模組及前置需求；整套能不能跑還需要驗證。</p><span class="tag partial" data-i18n="partial">部分可用</span></article>
+          <article class="tile"><span class="glyph" aria-hidden="true">{ }</span><h3 data-i18n="p5Title">寫模組、修版本很花時間</h3><p data-i18n="p5Body">協助開發者閱讀程式庫、檢查 Forge／NeoForge 差異，配合原本的 CI 測試。</p><span class="tag partial" data-i18n="partial">部分可用</span></article>
+          <article class="tile"><span class="glyph" aria-hidden="true">➜</span><h3 data-i18n="p6Title">新玩家老是裝不好</h3><p data-i18n="p6Body">協助檢查教學、啟動器與更新流程；真正的雙擊安裝後直接遊玩還在規劃。</p><span class="tag todo" data-i18n="planning">持續開發</span></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-section" id="how">
+      <div class="wrap">
+        <p class="kicker" data-i18n="howKicker">HOW IT WORKS</p>
+        <h2 data-i18n="howTitle">先找問題，再決定要不要修</h2>
+        <p class="section-lead" data-i18n="howLead">不需要把正式世界交給 AI。你可以只請它分析日誌，等有需要且你同意，才在隔離沙箱測試。</p>
+        <div class="feature-layout">
+          <div class="feature-panel">
+            <ol class="story">
+              <li><strong data-i18n="step1Title">① 看線索</strong><br><span data-i18n="step1Body">讀取日誌、模組檔案和目前版本。</span></li>
+              <li><strong data-i18n="step2Title">② 查相依</strong><br><span data-i18n="step2Body">比對已知前置模組及版本限制。</span></li>
+              <li><strong data-i18n="step3Title">③ 沙箱試修（可選）</strong><br><span data-i18n="step3Body">在獨立測試環境驗證，不修改正式玩家世界。</span></li>
+              <li><strong data-i18n="step4Title">④ 告訴你結果</strong><br><span data-i18n="step4Body">交付有證據的報告；正式修改由服主決定。</span></li>
+            </ol>
+          </div>
+          <div class="feature-panel">
+            <h3 data-i18n="notMagicTitle">不是什麼神奇黑盒子</h3>
+            <p data-i18n="notMagicBody">它把 Python 分析、模組資料、已知版本資訊、可選 AI 和既有 Minecraft 工具串在一起。AI 負責解釋，檔案驗證和測試結果要靠工具確認。</p>
+            <p data-i18n="notMagicDetail">你不必換掉原有的 Minecraft 啟動器、同步器或管理面板；也不必先申請付費 AI 帳號才能跑基本分析。</p>
+            <a href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/docs/ADVANCED_GUIDE.zh-TW.md" id="advanced-link" data-i18n="advanced">想看進階技術說明 →</a>
+          </div>
+        </div>
+        <div class="visual">
+          <img id="workflow-image" src="assets/totemops-steps-zh.svg" width="1200" height="350" alt="四步驟流程示意：看線索、查版本、沙箱驗證、交付報告" loading="lazy">
+          <p class="figure-label" data-i18n="workflowCaption">流程示意：真實沙箱測試只會在符合條件並取得授權後執行</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-section" id="proof">
+      <div class="wrap">
+        <p class="kicker" data-i18n="proofKicker">REAL TEST</p>
+        <h2 data-i18n="proofTitle">真的測過的一個案例</h2>
+        <div class="proof">
+          <strong data-i18n="proofHeading">Waystones 無法開服 → 發現缺少 Balm</strong>
+          <p data-i18n="proofBody">在 Minecraft 1.21.1／NeoForge 21.1.259 的一次性沙箱中，移除必要前置 Balm 後，伺服器真的報錯；加入已校驗的 Balm，再次啟動後通過 Minecraft 協定就緒檢查。</p>
+          <p data-i18n="proofLimit">注意：這證明該次伺服器能回應協定，不代表玩家登入、傳送功能或所有模組都已通過測試。其餘五類是合成日誌辨識測試，不是五次真實修復。</p>
+          <a href="https://github.com/j0935586110-lgtm/TotemOps/tree/main/evidence/final-acceptance-20261014" data-i18n="proofLink">查看測試證據 →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-section" id="status">
+      <div class="wrap">
+        <p class="kicker" data-i18n="statusKicker">HONEST STATUS</p>
+        <h2 data-i18n="statusTitle">做到哪裡？哪些還沒做？</h2>
+        <div class="status-grid">
+          <div class="status-col"><h3 data-i18n="statusReady">✓ 目前能用</h3><ul><li data-i18n="yes1">錯誤日誌與模組資料的唯讀分析</li><li data-i18n="yes2">模組前置依賴及指定版本候選查詢</li><li data-i18n="yes3">部分模組檔案校驗與獨立沙箱實測</li><li data-i18n="yes4">可選插件、開發者 AI Skill 與更新包審查</li></ul></div>
+          <div class="status-col todo"><h3 data-i18n="statusNotReady">⌛ 還不能保證</h3><ul><li data-i18n="no1">任何崩潰都能自動修復</li><li data-i18n="no2">所有模組組合 100% 相容</li><li data-i18n="no3">正式世界的自動備份與完整回滾</li><li data-i18n="no4">下載 Setup.exe 後雙擊直接進服</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-section" id="start">
+      <div class="wrap">
+        <p class="kicker" data-i18n="startKicker">GET STARTED</p>
+        <h2 data-i18n="startTitle">先用最簡單的方法試試</h2>
+        <p class="section-lead" data-i18n="startLead">適合會開終端機的服主或開發者。基本唯讀功能不用 Docker、Java 遊戲伺服器或 AI API Key；需要 Python 3.11+。</p>
+        <div class="steps">
+          <div class="step"><h3 data-i18n="install1">① 取得原始碼</h3><code>git clone https://github.com/j0935586110-lgtm/TotemOps.git</code><p data-i18n="install1Note">從 GitHub 取得開源 Alpha 版。</p></div>
+          <div class="step"><h3 data-i18n="install2">② 準備 Python</h3><code>cd TotemOps
+python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Windows 可以使用 py -3 代替 python3。</p></div>
+          <div class="step"><h3 data-i18n="install3">③ 分析錯誤日誌</h3><code>python3 tools/totem_operator.py quick diagnose latest.log</code><p data-i18n="install3Note">把 latest.log 改成你自己的日誌路徑，分析不會修改伺服器。</p></div>
+        </div>
+        <div class="actions">
+          <a class="btn primary" href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/README.md" id="guide-link" data-i18n="guide">閱讀中文使用說明 ↗</a>
+          <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/issues" data-i18n="issues">回報你遇到的問題 ↗</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap">
+      <div class="footerlinks">
+        <a href="https://github.com/j0935586110-lgtm/TotemOps" data-i18n="footerGithub">GitHub 原始碼</a>
+        <a href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/SECURITY.md" data-i18n="footerSecurity">安全政策</a>
+        <a href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/LICENSE" data-i18n="footerLicense">Apache-2.0 授權</a>
+      </div>
+      <p data-i18n="footerDisclaimer">非官方 Minecraft 社群工具，與 Mojang Studios、Microsoft 無關。插畫為原創示意，並非遊戲畫面。第三方模組及遊戲資產各自保有其權利。</p>
+    </div>
+  </footer>
+  <script>
+    (function(){
+      "use strict";
+      const dict={
+        zh:{
+          skip:"跳到主要內容",navPain:"解決什麼",navHow:"怎麼運作",navStatus:"做到哪裡",navStart:"開始使用",eyebrow:"開源工具 · Minecraft 故障診斷",
+          headline1:"Minecraft 出問題？",headline2:"先找原因，再安全處理。",lead:"不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。",
+          btnRepo:"查看開源專案 ↗",btnRelease:"下載 Alpha 原始碼 ↗",alert:"⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。",
+          heroCaption:"原創示意插畫，非 Minecraft 遊戲截圖",painKicker:"使用者痛點",painTitle:"你是不是也遇過這些麻煩？",painLead:"不想再一個個猜是什麼模組壞了、更新會不會讓整台伺服器不能玩？先從最常見的問題開始。",
+          p1Title:"伺服器突然開不了",p1Body:"很長的錯誤日誌不知道看哪裡？幫你挑出關鍵錯誤，給出下一步檢查方向。",
+          p2Title:"模組一直衝突",p2Body:"找出模組宣告的前置依賴、版本問題與相容性線索，不用只靠猜。",
+          p3Title:"不敢隨便更新",p3Body:"先檢查更新包內容和風險，再決定是否發布，不直接替你改檔案。",
+          p4Title:"想加玩法卻不知裝什麼",p4Body:"依 Minecraft 與 Loader 版本找到候選模組及前置需求；整套能不能跑還需要驗證。",
+          p5Title:"寫模組、修版本很花時間",p5Body:"協助開發者閱讀程式庫、檢查 Forge／NeoForge 差異，配合原本的 CI 測試。",
+          p6Title:"新玩家老是裝不好",p6Body:"協助檢查教學、啟動器與更新流程；真正的雙擊安裝後直接遊玩還在規劃。",
+          available:"已可使用",partial:"部分可用",planning:"持續開發",
+          howKicker:"處理流程",howTitle:"先找問題，再決定要不要修",howLead:"不需要把正式世界交給 AI。你可以只請它分析日誌，等有需要且你同意，才在隔離沙箱測試。",
+          step1Title:"① 看線索",step1Body:"讀取日誌、模組檔案和目前版本。",step2Title:"② 查相依",step2Body:"比對已知前置模組及版本限制。",
+          step3Title:"③ 沙箱試修（可選）",step3Body:"在獨立測試環境驗證，不修改正式玩家世界。",step4Title:"④ 告訴你結果",step4Body:"交付有證據的報告；正式修改由服主決定。",
+          notMagicTitle:"不是什麼神奇黑盒子",notMagicBody:"它把 Python 分析、模組資料、已知版本資訊、可選 AI 和既有 Minecraft 工具串在一起。AI 負責解釋，檔案驗證和測試結果要靠工具確認。",
+          notMagicDetail:"你不必換掉原有的 Minecraft 啟動器、同步器或管理面板；也不必先申請付費 AI 帳號才能跑基本分析。",advanced:"想看進階技術說明 →",
+          workflowCaption:"流程示意：真實沙箱測試只會在符合條件並取得授權後執行",
+          proofKicker:"真實測試",proofTitle:"真的測過的一個案例",proofHeading:"Waystones 無法開服 → 發現缺少 Balm",
+          proofBody:"在 Minecraft 1.21.1／NeoForge 21.1.259 的一次性沙箱中，移除必要前置 Balm 後，伺服器真的報錯；加入已校驗的 Balm，再次啟動後通過 Minecraft 協定就緒檢查。",
+          proofLimit:"注意：這證明該次伺服器能回應協定，不代表玩家登入、傳送功能或所有模組都已通過測試。其餘五類是合成日誌辨識測試，不是五次真實修復。",proofLink:"查看測試證據 →",
+          statusKicker:"目前狀態",statusTitle:"做到哪裡？哪些還沒做？",statusReady:"✓ 目前能用",statusNotReady:"⌛ 還不能保證",
+          yes1:"錯誤日誌與模組資料的唯讀分析",yes2:"模組前置依賴及指定版本候選查詢",yes3:"部分模組檔案校驗與獨立沙箱實測",yes4:"可選插件、開發者 AI Skill 與更新包審查",
+          no1:"任何崩潰都能自動修復",no2:"所有模組組合 100% 相容",no3:"正式世界的自動備份與完整回滾",no4:"下載 Setup.exe 後雙擊直接進服",
+          startKicker:"開始使用",startTitle:"先用最簡單的方法試試",startLead:"適合會開終端機的服主或開發者。基本唯讀功能不用 Docker、Java 遊戲伺服器或 AI API Key；需要 Python 3.11+。",
+          install1:"① 取得原始碼",install1Note:"從 GitHub 取得開源 Alpha 版。",install2:"② 準備 Python",install2Note:"Windows 可以使用 py -3 代替 python3。",
+          install3:"③ 分析錯誤日誌",install3Note:"把 latest.log 改成你自己的日誌路徑，分析不會修改伺服器。",guide:"閱讀中文使用說明 ↗",issues:"回報你遇到的問題 ↗",
+          footerGithub:"GitHub 原始碼",footerSecurity:"安全政策",footerLicense:"Apache-2.0 授權",footerDisclaimer:"非官方 Minecraft 社群工具，與 Mojang Studios、Microsoft 無關。插畫為原創示意，並非遊戲畫面。第三方模組及遊戲資產各自保有其權利。"
+        },
+        en:{
+          skip:"Skip to main content",navPain:"Problems solved",navHow:"How it works",navStatus:"Current status",navStart:"Get started",eyebrow:"OPEN SOURCE · MINECRAFT TROUBLESHOOTING",
+          headline1:"Minecraft not working?",headline2:"Find the cause. Fix with evidence.",lead:"TotemOps helps server owners understand crash logs, inspect mod dependencies and review risky updates. Spend less time guessing and more time on what actually matters.",
+          btnRepo:"Explore on GitHub ↗",btnRelease:"Get Alpha source ↗",alert:"⚠️ Alpha preview: read-only inspection and selected authorized sandbox tests are available. It does NOT guarantee automatic repairs or provide a playable one-click Minecraft game installer.",
+          heroCaption:"Original concept illustration, not a captured Minecraft gameplay screenshot",painKicker:"COMMON PROBLEMS",painTitle:"Have you run into these problems?",painLead:"No more guessing which mod broke or whether an update will knock the server offline. Start with the evidence.",
+          p1Title:"Server won't start",p1Body:"Logs are huge and cryptic. Pull out key errors and find what to investigate next.",
+          p2Title:"Mods don't work together",p2Body:"See declared missing dependencies, version limitations and compatibility clues.",
+          p3Title:"Updates feel risky",p3Body:"Review what an update package changes before you decide to publish it. No automatic file edits.",
+          p4Title:"Which mod adds the feature I want?",p4Body:"Search mod candidates by Minecraft and loader version; full compatibility still needs testing.",
+          p5Title:"Maintaining mods takes forever",p5Body:"Help developers inspect repositories, Forge/NeoForge differences and existing CI results.",
+          p6Title:"New players struggle with setup",p6Body:"Review onboarding and update workflows. A true double-click-and-play installer is still future work.",
+          available:"Available",partial:"Partially available",planning:"In development",
+          howKicker:"HOW IT WORKS",howTitle:"Investigate first. Change only with approval.",howLead:"You do not need to hand your production world to AI. Start with read-only logs; an isolated sandbox test is optional and owner-authorized.",
+          step1Title:"① Read clues",step1Body:"Inspect logs, mod metadata and versions.",step2Title:"② Check dependencies",step2Body:"Compare known requirements and version constraints.",
+          step3Title:"③ Test in sandbox (optional)",step3Body:"Verify in a disposable environment, not in a live player world.",step4Title:"④ Share findings",step4Body:"Show evidence; the server owner decides whether to change anything.",
+          notMagicTitle:"No black-box magic",notMagicBody:"TotemOps combines lightweight Python inspection, version metadata, optional AI and established Minecraft tools. AI explains the findings, while file hashes and real test results supply the evidence.",
+          notMagicDetail:"You don't have to replace your existing launcher, updater, or hosting panel. Basic local diagnostics don't require a paid AI account.",advanced:"Read the technical guide →",
+          workflowCaption:"Concept workflow: actual sandbox tests require an authorized, suitable environment",
+          proofKicker:"REAL TEST",proofTitle:"A real case we reproduced",proofHeading:"Waystones fails to start → missing Balm identified",
+          proofBody:"In a disposable Minecraft 1.21.1 / NeoForge 21.1.259 server, removing the required Balm dependency produced a real server error. Restoring a verified Balm package allowed the server to pass a Minecraft protocol-readiness check.",
+          proofLimit:"This proves only protocol readiness in that specific run—not in-game gameplay, authentication or universal compatibility. Five other fault categories were synthetic-log tests, not five live repairs.",proofLink:"See the evidence →",
+          statusKicker:"HONEST STATUS",statusTitle:"What works, and what doesn't yet?",statusReady:"✓ Available today",statusNotReady:"⌛ Not yet guaranteed",
+          yes1:"Read-only crash log and mod metadata analysis",yes2:"Declared dependencies and exact-version candidate lookup",yes3:"Selected checksum and disposable sandbox experiments",yes4:"Opt-in plugins, agent skills and release package review",
+          no1:"Autonomous repair of every crash",no2:"100% compatibility for arbitrary mod collections",no3:"Automated production backups and complete world rollback",no4:"Playable double-click-and-join Setup.exe",
+          startKicker:"GET STARTED",startTitle:"Try the simplest workflow",startLead:"For server owners and developers comfortable with a terminal. Local read-only inspection needs no Docker, Java server or AI API key; Python 3.11+ is required.",
+          install1:"① Clone the source",install1Note:"Get the open-source Alpha preview from GitHub.",install2:"② Prepare Python",install2Note:"On Windows, use py -3 instead of python3.",
+          install3:"③ Diagnose a log",install3Note:"Replace latest.log with your actual path; diagnosis won't modify the server.",guide:"Read the English guide ↗",issues:"Report a problem ↗",
+          footerGithub:"GitHub source",footerSecurity:"Security policy",footerLicense:"Apache-2.0 license",footerDisclaimer:"An unofficial Minecraft community tool, not affiliated with Mojang Studios or Microsoft. Illustrations are original concept art, not game screenshots. All third-party assets retain their respective licenses."
+        }
+      };
+      const buttons=Array.from(document.querySelectorAll("[data-select-language]"));
+      function setLanguage(language){
+        const lang=language==="en"?"en":"zh";
+        document.documentElement.lang=lang==="zh"?"zh-Hant":"en";
+        document.title=lang==="zh"?"不死圖騰 TotemOps — Minecraft 出問題，先找原因":"TotemOps — Minecraft troubleshooting with evidence";
+        for(const el of document.querySelectorAll("[data-i18n]")){
+          const key=el.getAttribute("data-i18n");
+          if(Object.prototype.hasOwnProperty.call(dict[lang],key)) el.textContent=dict[lang][key];
+        }
+        for(const button of buttons){button.setAttribute("aria-pressed",String(button.getAttribute("data-select-language")===lang));}
+        document.getElementById("workflow-image").src=lang==="zh"?"assets/totemops-steps-zh.svg":"assets/totemops-steps-en.svg";
+        document.getElementById("workflow-image").alt=lang==="zh"?"流程示意：看線索、查相依、可選沙箱、交付報告":"Concept workflow: inspect logs, check dependencies, optionally test in sandbox, report results";
+        document.getElementById("advanced-link").href=lang==="zh"?"https://github.com/j0935586110-lgtm/TotemOps/blob/main/docs/ADVANCED_GUIDE.zh-TW.md":"https://github.com/j0935586110-lgtm/TotemOps/blob/main/docs/ADVANCED_GUIDE.en.md";
+        document.getElementById("guide-link").href=lang==="zh"?"https://github.com/j0935586110-lgtm/TotemOps/blob/main/README.md":"https://github.com/j0935586110-lgtm/TotemOps/blob/main/README.en.md";
+        document.querySelector('meta[name="description"]').content=dict[lang].lead;
+        try{localStorage.setItem("totemops-language",lang)}catch(_){}
+      }
+      for(const button of buttons){button.addEventListener("click",()=>setLanguage(button.getAttribute("data-select-language")));}
+      const params=new URLSearchParams(location.search);
+      let initial=params.get("lang");
+      if(!["zh","en"].includes(initial)){try{initial=localStorage.getItem("totemops-language")}catch(_){}}
+      setLanguage(initial==="en"?"en":"zh");
+    })();
+  </script>
+</body>
+</html>
