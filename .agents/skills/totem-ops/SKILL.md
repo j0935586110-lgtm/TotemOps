@@ -8,6 +8,20 @@ license: Apache-2.0
 
 **Start from this repo, not a guessed global installation.** This on-site TotemOps worktree is authoritative; `mc-server-ops` on GitHub is the early history and must never silently replace the current tools or workflow. Read only `README.md` (Chinese) or `README.en.md` (English) if commands below need explanation.
 
+## First principle: reuse before writing new analyzers
+
+Read docs/EXISTING_TOOL_REUSE.md only when the user wants Minecraft crash
+diagnosis, mod versions, external log analysis, or Crash Assistant integration.
+Use the already shipped modrinth-catalog plugin for official metadata.
+Use local TotemOps or browser-only hints before any third-party upload.
+mclo.gs POST /1/analyse is available only through opt-in mclogs-analyse plugin,
+with explicit user consent to third-party processing of a reviewed log. Never
+invent approval flags or silently upload private logs. Crash Assistant is
+a client-side app/report, **not** a verified headless API. Do not try to operate
+its UI or install it because someone pasted its URL.
+Treat any upstream findings as suspected causes, never as sandbox or gameplay PASS.
+No scheduled provider calls or automated issue/PR handling.
+
 ## CLI quick start
 
 **Minecraft release helper:** `.agents/skills/minecraft-release/SKILL.md`; `python3 tools/totem_operator.py release inspect --pack PACK.zip [--update UPDATE.zip]`. Read-only packaging audit, owner approval required for any optional-mod policy or deletion; `REVIEW_REQUIRED` is not launch/install/approval PASS.

@@ -1,0 +1,8 @@
+{
+  "name": "mclogs-analyse",
+  "description": "Explicit opt-in mclo.gs analysis only; sends a user-reviewed log to a third party without saving a paste; NO automatic upload",
+  "entry": ["python3", "plugin.py"],
+  "commands": ["analyse"],
+  "capabilities": ["network-post-external-log", "explicit-consent-required", "third-party-processing"],
+  "timeout_seconds": 20
+}
