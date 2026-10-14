@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: Apache-2.0
+# Single-use discovery branch plus manual opt-in; do not run on main pushes.
+# Success means NeoForge modded client reached a single-player world, NOT that
+# a human used a waystone UI or joined the external dedicated server.
+name: NeoForge playable-client smoke
+on:
+  push:
+    branches:
+      - test/playable-e2e-20261015
+    paths:
+      - .github/workflows/neoforge-client-world-smoke.yml
+      - tools/ci_stage_neoforge_mods.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  client:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - name: Checkout minimal test code
+        uses: actions/checkout@v4
+
+      - name: Use JDK 21 for Minecraft 1.21.1
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Fetch only officially pinned public Waystones and Balm jars
+        run: python3 tools/ci_stage_neoforge_mods.py
+
+      - name: Verify expected jar count and exact digests
+        shell: bash
+        run: |
+          test "$(find run/mods -maxdepth 1 -name '*.jar' | wc -l)" -eq 2
+          printf '%s  %s\n' \
+            'ca76a4457160e8353b1f013a21ab377b264141f466d84ec8952a123058b8af78' \
+            'run/mods/waystones-neoforge-1.21.1-21.1.46.jar' \
+            '6be660e1f6d169553bf44f66d4f78bb9e96a1d66ce108d9608819e3ce6bfba34' \
+            'run/mods/balm-neoforge-1.21.1-21.0.66.jar' | sha256sum -c -
+
+      - name: Run a real NeoForge 1.21.1 CLIENT and load a single-player world
+        uses: headlesshq/mc-runtime-test@fbafe02f89f4f13682e7b16dbcee6b6a43f4faca # 4.5.1
+        with:
+          mc: '1.21.1'
+          modloader: neoforge
+          java: '21'
+          mc-runtime-test: neoforge
+          mc-runtime-test-version: 4.5.2
+          cache-mc: 'false'
+          dummy-assets: 'true'
+          xvfb: 'true'
+
+      - name: Preserve isolated client failure details
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neoforge-client-world-smoke-logs
+          path: |
+            run/logs/*.log
+            run/crash-reports/*.txt
+          if-no-files-found: warn
+          retention-days: 3
