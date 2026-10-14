@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "case_id": "waystones-neoforge-1.21.1-real-game-2026-10-15",
+  "purpose": "Separate genuine world behaviour and client playability from loader/protocol success",
+  "versions": {
+    "minecraft": "1.21.1",
+    "neoforge": "21.1.259",
+    "waystones": "21.1.46",
+    "balm": "21.0.66"
+  },
+  "environment": {
+    "node": "j-e3",
+    "test_only_path": "/home/j/totemops-playable-e2e-20261015",
+    "docker_network": "tot-e2e-20261015",
+    "docker_internal_network": true,
+    "published_server_ports": 0,
+    "world_created_in_new_test_directory": true,
+    "production_world_modified": false,
+    "test_account_used": "offline fake identity in Docker-only isolated network",
+    "secrets_or_world_uploaded": false
+  },
+  "evidence": {
+    "missing_balm_fault": "Existing actual F1 runtime receipt: evidence/final-acceptance-20261014/live-f1-before.json",
+    "fixed_balm_boot": "Existing actual F1 runtime receipt: evidence/final-acceptance-20261014/live-f1-after.json",
+    "new_server_world_block_before_restart_sha256": "ee5edb36d611007ab94a37119e176843c0bec0f494afcf99ca85c7ebe5a650e7",
+    "new_server_world_block_after_restart_sha256": "b710225013f07ac334c2773053ee21ec6e67c050a73982fdc884e32e6f34858e",
+    "non_modded_bot_login_attempt_sha256": "e348e09d1b75b3c73abf0e2d1ff54cfc23c0f24ab3abd1ff94b1388481b94449",
+    "server_world_block_id": "waystones:waystone",
+    "block_coordinates": [
+      0,
+      81,
+      0
+    ],
+    "block_entity_persisted_across_restart": true,
+    "block_entity_uuid_words": [
+      2140306932,
+      -469872644,
+      -1876999041,
+      1268054851
+    ]
+  },
+  "gates": {
+    "server_boot": "PASS",
+    "mandatory_dependency_fix": "PASS",
+    "server_block_placement": "PASS",
+    "server_block_nbt_read": "PASS",
+    "world_persistence_restart": "PASS",
+    "vanilla_protocol_bot_join": "FAIL_EXPECTED_UNSUPPORTED_CLIENT",
+    "compatible_neoforge_client_singleplayer": "PASS_CLIENT_WORLD_SMOKE_ONLY",
+    "compatible_neoforge_client_join_test_server": "NOT_VERIFIED",
+    "waystones_ui_and_teleport": "NOT_VERIFIED",
+    "human_player_end_to_end": "NOT_VERIFIED",
+    "waystones_gametest": "BLOCKED_ZERO_TESTS_DISCOVERED"
+  },
+  "bot_failure_classification": {
+    "root_cause": "Client-side modloader mismatch (vanilla Mineflayer lacks NeoForge 21.1.259 handshake)",
+    "server_message": "You are trying to connect to a server that is running NeoForge, but you are not. Please install NeoForge Version: 21.1.259 to connect to this server.",
+    "does_not_implicate": [
+      "server_boot",
+      "waystones_dependency_resolution"
+    ]
+  },
+  "fully_playable_verified": false,
+  "client_ci_branch": "test/playable-e2e-20261015",
+  "client_ci_pending_run": null,
+  "status": "CLIENT_WORLD_SMOKE_PASS_ZERO_GAMETESTS_NO_MULTIPLAYER_PROOF",
+  "client_ci_verified_run": 38627418271,
+  "client_ci_conclusion": "success",
+  "client_ci_game_tests_discovered": 0,
+  "client_ci_game_tests_evidence": "logs/latest.log: TestFunctions: []; No tests found, Successfully finished."
+}
