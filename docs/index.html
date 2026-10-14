@@ -4,16 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1926">
-  <meta name="description" content="不死圖騰 TotemOps：幫 Minecraft 服主看懂錯誤日誌、模組依賴與更新風險。開源、唯讀優先、有證據再修復。">
+  <meta name="description" content="不死圖騰 TotemOps 是免費開源 Minecraft 伺服器故障診斷工具。立即在瀏覽器本機分析 latest.log，查找前置模組、Java、Mixin 及記憶體錯誤，免登入、不上傳檔案。">
+  <link rel="canonical" href="https://j0935586110-lgtm.github.io/TotemOps/">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://j0935586110-lgtm.github.io/TotemOps/">
   <meta property="og:site_name" content="TotemOps · 不死圖騰">
-  <meta property="og:title" content="不死圖騰 TotemOps — Minecraft 出問題，先找原因">
-  <meta property="og:description" content="用白話看懂伺服器崩潰、模組衝突和更新風險。免費開源，先找證據再動手。">
+  <meta property="og:title" content="Minecraft 錯誤日誌免費診斷｜不死圖騰 TotemOps">
+  <meta property="og:description" content="不用下載或登入，在瀏覽器本機分析 Minecraft latest.log。免費找出可能的模組依賴與故障線索；先看證據再動手。">
   <meta property="og:image" content="https://j0935586110-lgtm.github.io/TotemOps/assets/totemops-social.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="560">
   <meta name="twitter:card" content="summary_large_image">
-  <title>不死圖騰 TotemOps — Minecraft 出問題，先找原因</title>
+  <title>Minecraft 故障日誌免費分析、模組依賴檢查｜不死圖騰 TotemOps</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <style>
     :root { color-scheme:dark; --bg:#081522; --surface:#102536; --surface2:#122c3d; --line:#294458; --white:#eaf7f7; --muted:#a1bdc9; --mint:#6bf4bd; --mint-strong:#34cf9f; --amber:#ffd095; --max:1160px; }
@@ -98,6 +100,7 @@
     <div class="wrap header-inside">
       <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">✦</span><span>TotemOps <span style="color:#90e9bd">不死圖騰</span></span></a>
       <nav class="nav" aria-label="Site navigation">
+        <a href="diagnose.html" data-i18n="navTry">免費分析日誌</a>
         <a href="#pain" data-i18n="navPain">解決什麼</a>
         <a href="#how" data-i18n="navHow">怎麼運作</a>
         <a href="#status" data-i18n="navStatus">做到哪裡</a>
@@ -115,8 +118,8 @@
       <h1><span data-i18n="headline1">Minecraft 出問題？</span><br><span class="gradient" data-i18n="headline2">先找原因，再安全處理。</span></h1>
       <p class="lead" data-i18n="lead">不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。</p>
       <div class="actions">
-        <a class="btn primary" href="https://github.com/j0935586110-lgtm/TotemOps" data-i18n="btnRepo">查看開源專案 ↗</a>
-        <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/releases/tag/v0.1.0-alpha.1" data-i18n="btnRelease">下載 Alpha 原始碼 ↗</a>
+        <a class="btn primary" href="diagnose.html" data-i18n="btnTry">免費分析 latest.log →</a>
+        <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps" data-i18n="btnRepo">查看開源專案 ↗</a>
       </div>
       <div class="alert" data-i18n="alert">⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。</div>
       <img class="hero-img" src="assets/totemops-hero.svg" width="1200" height="560" alt="Illustration: a Minecraft-style server's error log becomes a clear evidence-backed repair suggestion; not a real gameplay screenshot." decoding="async">
@@ -203,7 +206,8 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
           <div class="step"><h3 data-i18n="install3">③ 分析錯誤日誌</h3><code>python3 tools/totem_operator.py quick diagnose latest.log</code><p data-i18n="install3Note">把 latest.log 改成你自己的日誌路徑，分析不會修改伺服器。</p></div>
         </div>
         <div class="actions">
-          <a class="btn primary" href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/README.md" id="guide-link" data-i18n="guide">閱讀中文使用說明 ↗</a>
+          <a class="btn primary" href="diagnose.html" data-i18n="startTry">免安裝，立即體驗日誌診斷 →</a>
+          <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/README.md" id="guide-link" data-i18n="guide">閱讀中文使用說明 ↗</a>
           <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/issues" data-i18n="issues">回報你遇到的問題 ↗</a>
         </div>
       </div>
@@ -224,9 +228,9 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
       "use strict";
       const dict={
         zh:{
-          skip:"跳到主要內容",navPain:"解決什麼",navHow:"怎麼運作",navStatus:"做到哪裡",navStart:"開始使用",eyebrow:"開源工具 · Minecraft 故障診斷",
+          skip:"跳到主要內容",navTry:"免費分析日誌",navPain:"解決什麼",navHow:"怎麼運作",navStatus:"做到哪裡",navStart:"開始使用",eyebrow:"開源工具 · Minecraft 故障診斷",
           headline1:"Minecraft 出問題？",headline2:"先找原因，再安全處理。",lead:"不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。",
-          btnRepo:"查看開源專案 ↗",btnRelease:"下載 Alpha 原始碼 ↗",alert:"⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。",
+          btnTry:"免費分析 latest.log →",btnRepo:"查看開源專案 ↗",startTry:"免安裝，立即體驗日誌診斷 →",btnRelease:"下載 Alpha 原始碼 ↗",alert:"⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。",
           heroCaption:"原創示意插畫，非 Minecraft 遊戲截圖",painKicker:"使用者痛點",painTitle:"你是不是也遇過這些麻煩？",painLead:"不想再一個個猜是什麼模組壞了、更新會不會讓整台伺服器不能玩？先從最常見的問題開始。",
           p1Title:"伺服器突然開不了",p1Body:"很長的錯誤日誌不知道看哪裡？幫你挑出關鍵錯誤，給出下一步檢查方向。",
           p2Title:"模組一直衝突",p2Body:"找出模組宣告的前置依賴、版本問題與相容性線索，不用只靠猜。",
@@ -253,9 +257,9 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
           footerGithub:"GitHub 原始碼",footerSecurity:"安全政策",footerLicense:"Apache-2.0 授權",footerDisclaimer:"非官方 Minecraft 社群工具，與 Mojang Studios、Microsoft 無關。插畫為原創示意，並非遊戲畫面。第三方模組及遊戲資產各自保有其權利。"
         },
         en:{
-          skip:"Skip to main content",navPain:"Problems solved",navHow:"How it works",navStatus:"Current status",navStart:"Get started",eyebrow:"OPEN SOURCE · MINECRAFT TROUBLESHOOTING",
+          skip:"Skip to main content",navTry:"Try log analyzer",navPain:"Problems solved",navHow:"How it works",navStatus:"Current status",navStart:"Get started",eyebrow:"OPEN SOURCE · MINECRAFT TROUBLESHOOTING",
           headline1:"Minecraft not working?",headline2:"Find the cause. Fix with evidence.",lead:"TotemOps helps server owners understand crash logs, inspect mod dependencies and review risky updates. Spend less time guessing and more time on what actually matters.",
-          btnRepo:"Explore on GitHub ↗",btnRelease:"Get Alpha source ↗",alert:"⚠️ Alpha preview: read-only inspection and selected authorized sandbox tests are available. It does NOT guarantee automatic repairs or provide a playable one-click Minecraft game installer.",
+          btnTry:"Analyze latest.log for free →",btnRepo:"Explore on GitHub ↗",startTry:"Try log analysis in your browser →",btnRelease:"Get Alpha source ↗",alert:"⚠️ Alpha preview: read-only inspection and selected authorized sandbox tests are available. It does NOT guarantee automatic repairs or provide a playable one-click Minecraft game installer.",
           heroCaption:"Original concept illustration, not a captured Minecraft gameplay screenshot",painKicker:"COMMON PROBLEMS",painTitle:"Have you run into these problems?",painLead:"No more guessing which mod broke or whether an update will knock the server offline. Start with the evidence.",
           p1Title:"Server won't start",p1Body:"Logs are huge and cryptic. Pull out key errors and find what to investigate next.",
           p2Title:"Mods don't work together",p2Body:"See declared missing dependencies, version limitations and compatibility clues.",
