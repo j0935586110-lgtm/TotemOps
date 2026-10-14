@@ -1,0 +1,88 @@
+{
+  "status": "PASS",
+  "test_scope": "five_synthetic_fault_logs_inside_disposable_1.21.1_NeoForge_sandbox",
+  "files": [
+    {
+      "case": "F1",
+      "pass": true,
+      "expected": "dependency_load_failure",
+      "actual_signals": [
+        "dependency_load_failure"
+      ],
+      "cli_exit": 0,
+      "seconds": 0.4123,
+      "stdout_bytes": 262,
+      "log_sha256": "ce390bb297b04cd3644e6bc898cc11dbf2f5cae4464e4fb7d660595b5627c806",
+      "classification_only": true,
+      "minecraft_executed": false
+    },
+    {
+      "case": "F2",
+      "pass": true,
+      "expected": "client_class_on_server",
+      "actual_signals": [
+        "client_class_on_server"
+      ],
+      "cli_exit": 0,
+      "seconds": 0.3399,
+      "stdout_bytes": 261,
+      "log_sha256": "c8779829679d16b4fa7d3c7b162fd45def65814cc53b5fb59c03cdd962cba19b",
+      "classification_only": true,
+      "minecraft_executed": false
+    },
+    {
+      "case": "F3",
+      "pass": true,
+      "expected": "mixin_injection_failure",
+      "actual_signals": [
+        "mixin_injection_failure"
+      ],
+      "cli_exit": 0,
+      "seconds": 0.3485,
+      "stdout_bytes": 262,
+      "log_sha256": "f9c4915572034d702318ae28a13bab3de02322c368fa28ecdfd31b11bb79f1bb",
+      "classification_only": true,
+      "minecraft_executed": false
+    },
+    {
+      "case": "F4",
+      "pass": true,
+      "expected": "java_runtime_version_mismatch",
+      "actual_signals": [
+        "java_runtime_version_mismatch"
+      ],
+      "cli_exit": 0,
+      "seconds": 0.3647,
+      "stdout_bytes": 268,
+      "log_sha256": "dba9a68f0b10cf41e8c9281bd18445890711120be47c40068ab7d5eb668ba84b",
+      "classification_only": true,
+      "minecraft_executed": false
+    },
+    {
+      "case": "F5",
+      "pass": true,
+      "expected": "loader_version_incompatible",
+      "actual_signals": [
+        "loader_version_incompatible"
+      ],
+      "cli_exit": 0,
+      "seconds": 0.4249,
+      "stdout_bytes": 266,
+      "log_sha256": "0383abdcc32e463981217b2182d50d5e22e0c176aad1348b8d06f51449c2b0b2",
+      "classification_only": true,
+      "minecraft_executed": false
+    }
+  ],
+  "minecraft_server_started_for_these_cases": false,
+  "version": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "loader_version": "21.1.259",
+    "friend_artifacts": [
+      "multiverse-1.0.2.jar",
+      "neoauthreloaded-neoforge-1.21.1-4.6.0.jar"
+    ],
+    "note": "Public release JARs; no private code or live worlds"
+  },
+  "unit_status": "PASS"
+}

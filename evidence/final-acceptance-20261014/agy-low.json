@@ -1,0 +1,27 @@
+{
+  "F1": {
+    "type": "missing_dependency",
+    "confidence": "suspected",
+    "next": "Install the required Balm dependency compatible with Minecraft 1.21.1 and NeoForge."
+  },
+  "F2": {
+    "type": "client_only_on_server",
+    "confidence": "suspected",
+    "next": "Identify and remove the client-only mod causing the crash from the server mods folder."
+  },
+  "F3": {
+    "type": "mixin_injection_conflict",
+    "confidence": "suspected",
+    "next": "Check mod versions for compatibility with NeoForge 21.1.259 or remove the mod providing WorldMixin."
+  },
+  "F4": {
+    "type": "wrong_java_runtime",
+    "confidence": "suspected",
+    "next": "Upgrade the server Java runtime to Java 21 (class file version 65.0) instead of Java 17 (61.0)."
+  },
+  "F5": {
+    "type": "loader_version_conflict",
+    "confidence": "suspected",
+    "next": "Remove Fabric API from the server mods directory as it is incompatible with NeoForge."
+  }
+}

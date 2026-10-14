@@ -1,0 +1,33 @@
+{
+  "agents": {
+    "defaults": {
+      "sandbox": {
+        "mode": "all",
+        "scope": "session",
+        "backend": "docker",
+        "workspaceAccess": "ro",
+        "docker": {
+          "image": "openclaw-sandbox:bookworm-slim",
+          "network": "none",
+          "readOnlyRoot": true,
+          "capDrop": [
+            "ALL"
+          ],
+          "tmpfs": [
+            "/tmp",
+            "/var/tmp",
+            "/run"
+          ]
+        }
+      }
+    }
+  },
+  "tools": {
+    "elevated": {
+      "enabled": false
+    },
+    "exec": {
+      "host": "sandbox"
+    }
+  }
+}

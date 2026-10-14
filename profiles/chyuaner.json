@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "id": "chyuaner",
+  "maintainer": "chyuaner",
+  "repositories": [
+    {
+      "github": "chyuaner/Minecraft-NeoAuthReloaded",
+      "ref": "master",
+      "sha": "1c7a7d0eec9a9583e2db3638fbbc8e445ce4c6c3",
+      "loader": "forge+neoforge",
+      "minecraft": "1.20.1+1.21.1",
+      "build": [
+        "./gradlew",
+        "build"
+      ],
+      "focus": [
+        "three Gradle modules",
+        "login state machine",
+        "database migration",
+        "client smoke tests",
+        "release CI"
+      ]
+    },
+    {
+      "github": "chyuaner/python-minecraft-mods-sync",
+      "ref": "master",
+      "sha": "4453bdfedb75ae35e913fd1dd5554f0440cbb59e",
+      "loader": "client",
+      "minecraft": "multi",
+      "build": [
+        "python3",
+        "-m",
+        "compileall",
+        "-q",
+        "."
+      ],
+      "focus": [
+        "ZIP fallback",
+        "barian_ managed prefix",
+        "Prism/PCL"
+      ]
+    },
+    {
+      "github": "chyuaner/Minecraft-BlueMap-barian-essentials",
+      "ref": "master",
+      "sha": "eb9b4c098ba85c0ccf45b4411d99c2632baa04ad",
+      "loader": "forge+neoforge",
+      "minecraft": "1.20.1+1.21.1",
+      "build": [
+        "./gradlew",
+        "build"
+      ],
+      "focus": [
+        "Warp/Home/DimWarp API",
+        "BlueMap browser markers",
+        "mock fixture"
+      ]
+    },
+    {
+      "github": "chyuaner/php-minecraft-server-info",
+      "ref": "master",
+      "sha": "0fe73ffacb511b25a858391055575877ee151a42",
+      "loader": "server-api",
+      "minecraft": "multi",
+      "build": [
+        "composer",
+        "test"
+      ],
+      "focus": [
+        "PHP /mods JSON schema",
+        "mod metadata SHA-1 and downloadUrl",
+        "zip download",
+        "CDN and cache timeout",
+        "consumer API contract"
+      ]
+    }
+  ],
+  "restrictions": [
+    "No login attempts against production",
+    "No player/UUID/DB uploads",
+    "Respect GPLv3 and license boundaries",
+    "No external publish without owner consent"
+  ]
+}

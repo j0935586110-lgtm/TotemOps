@@ -1,0 +1,27 @@
+{
+  "artifacts": [
+    {
+      "filename": "waystones-neoforge-1.21.1-21.1.46.jar",
+      "matches_official_sha512": true,
+      "sha256": "ca76a4457160e8353b1f013a21ab377b264141f466d84ec8952a123058b8af78",
+      "sha512": "ca90b58d884d4bc2b08a870484ae7ede397e71d31eaaf01ff2603ad498d584763e099c2094e57031522385339705d2c011ed4910bf36efae688e64935b49ece9",
+      "size": 1223229,
+      "source_url": "https://api.modrinth.com/v2/version/6Z6MQ6os",
+      "version_id": "6Z6MQ6os"
+    },
+    {
+      "filename": "balm-neoforge-1.21.1-21.0.66.jar",
+      "matches_official_sha512": true,
+      "sha256": "6be660e1f6d169553bf44f66d4f78bb9e96a1d66ce108d9608819e3ce6bfba34",
+      "sha512": "0262d51c0e931d10c3dccefb3b5426a1622edecab243d4b15dce07a23309641370184776739765067d292d808242d088c6fbf249762689824eff9ba42c2d1e63",
+      "size": 783793,
+      "source_url": "https://api.modrinth.com/v2/version/CquiaiDj",
+      "version_id": "CquiaiDj"
+    }
+  ],
+  "case": "waystones-neoforge-1.21.1-required-dependency",
+  "executed_jar": false,
+  "prod_modified": false,
+  "source": "Modrinth version REST API",
+  "verified_at_utc": "2026-10-13T19:14:22.178676+00:00"
+}

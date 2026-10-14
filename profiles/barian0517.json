@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "id": "barian0517",
+  "maintainer": "Barian0517",
+  "repositories": [
+    {
+      "github": "Barian0517/Multiverse-Forge-V2",
+      "ref": "main",
+      "sha": "f2af57eb2eeb6dcd03b02e849cbe22943bcfa65c",
+      "loader": "forge",
+      "minecraft": "1.20.1",
+      "build": [
+        "./gradlew",
+        "build"
+      ],
+      "focus": [
+        "WorldEdit regen",
+        "portal/dimension",
+        "CI workflow",
+        "gameplay testing"
+      ]
+    },
+    {
+      "github": "Barian0517/modsync-v2",
+      "ref": "master",
+      "sha": "b63df158330cdc0624f2565c1cc8df3d89c55bc0",
+      "loader": "client",
+      "minecraft": "multi",
+      "build": [
+        "python3",
+        "-m",
+        "py_compile",
+        "main.py",
+        "MainWindow.py",
+        "WorkerThread.py"
+      ],
+      "focus": [
+        "config/kubejs",
+        "managed jars",
+        "ZIP fallback",
+        "PyQt GUI",
+        "--reconfig flag"
+      ]
+    }
+  ],
+  "restrictions": [
+    "Never modify real world/playerdata",
+    "Do not copy CC BY-NC-SA source into Apache-2.0",
+    "Only execute downloaded builds in restricted sandbox",
+    "No external publish without owner consent"
+  ]
+}

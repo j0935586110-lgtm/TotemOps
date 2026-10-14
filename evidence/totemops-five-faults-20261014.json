@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "loader_version": "21.1.259",
+    "friend_artifacts": [
+      "multiverse-1.0.2.jar",
+      "neoauthreloaded-neoforge-1.21.1-4.6.0.jar"
+    ],
+    "note": "Public release JARs; no private code or live worlds"
+  },
+  "cases": [
+    {
+      "id": "F1",
+      "expected": "missing_dependency",
+      "log": "[main/ERROR] Missing mandatory dependencies: Mod ID: 'balm', Requested by: 'waystones', Expected range: '[21.0.0,)', Actual: '[MISSING]'"
+    },
+    {
+      "id": "F2",
+      "expected": "client_only_on_server",
+      "log": "[main/ERROR] Attempted to load class net/minecraft/client/Minecraft for invalid dist DEDICATED_SERVER. java.lang.NoClassDefFoundError: net/minecraft/client/Minecraft"
+    },
+    {
+      "id": "F3",
+      "expected": "mixin_injection_conflict",
+      "log": "Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Mixin mod.mixins.json:WorldMixin FAILED during APPLY. Caused by: Critical injection failure: could not find target method"
+    },
+    {
+      "id": "F4",
+      "expected": "wrong_java_runtime",
+      "log": "java.lang.UnsupportedClassVersionError: net/minecraft/server/Main has been compiled by a more recent version of the Java Runtime (class file version 65.0), this runtime only recognizes class file versions up to 61.0"
+    },
+    {
+      "id": "F5",
+      "expected": "loader_version_conflict",
+      "log": "Incompatible mods found! Mod 'Fabric API' (fabric-api) requires 1.21.1 but the server uses NeoForge 21.1.259. Mod 'NeoAuthReloaded' requires NeoForge 1.21.1; incompatible mod loader."
+    }
+  ],
+  "sources": {
+    "F1": "https://modrinth.com/mod/waystones/version/21.1.1%2Bneoforge-1.21.1",
+    "F2": "https://github.com/neoforged/NeoForge/issues/3221",
+    "F3": "https://github.com/SpongePowered/Mixin/issues/652",
+    "F4": "https://github.com/neoforged/NeoForge/issues/1890",
+    "F5": "https://www.reddit.com/r/fabricmc/comments/1s1p2uo/"
+  },
+  "provenance": "Synthetic, safe fault-injection snippets adapted to 1.21.1 from the cited community categories. Not verbatim or claims of real crash captures."
+}

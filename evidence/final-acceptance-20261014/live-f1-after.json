@@ -1,0 +1,26 @@
+{
+  "status": "REAL_FIX_PROTOCOL_PASS",
+  "test": "F1_missing_Balm",
+  "input": "Waystones 21.1.46 plus Balm 21.0.66",
+  "minecraft": "1.21.1",
+  "loader": "NeoForge 21.1.259",
+  "docker_run_options": "non_root_readonly_cap_drop_all_no_new_privileges_mem_3g_cpu_2_pids_256",
+  "docker_image_id": "sha256:874430a041e4aecd51805f8a0b772777289d9e0ecfdf551b0fcde4695caa57c7",
+  "before_fault_verified": true,
+  "version_response": {
+    "name": "1.21.1",
+    "protocol": 767
+  },
+  "after_wall_seconds": 116,
+  "after_log_sha256": "e081ce9dfb9ccb855a5d3f1ca04e9c11f63857624369e36e90b3600e2ab7cc45",
+  "after_signals": [
+    "[21:22:15] [modloading-worker-0/INFO] [ne.ne.ne.co.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.259, for MC 1.21.1",
+    "[21:22:16] [modloading-worker-0/INFO] [ne.bl.mo.ba.ne.co.NeoForgeBalmConfig/]: Registering config for waystones:common (COMMON) with 38 properties.",
+    "[21:22:43] [Server thread/INFO] [minecraft/DedicatedServer]: Done (5.326s)! For help, type \"help\""
+  ],
+  "server_responded_protocol": true,
+  "waystones_gameplay_verified": false,
+  "original_container_state": "exited",
+  "sandbox_test_container_removed": true,
+  "production_modified": false
+}

@@ -1,0 +1,20 @@
+{
+  "status": "REAL_FAULT_REPRODUCED",
+  "test": "F1_missing_Balm",
+  "minecraft_version": "1.21.1",
+  "loader": "NeoForge 21.1.259",
+  "waystones_version": "21.1.46",
+  "source_sha256": "ca76a4457160e8353b1f013a21ab377b264141f466d84ec8952a123058b8af78",
+  "log_sha256": "b075372fc90dadf6fee94ae598ed0efe2642e3ce19af83a5173c92275631f518",
+  "evidence_lines": [
+    "[21:18:47.502] [main/ERROR] [loading.ModSorter/LOADING]: Missing or unsupported mandatory dependencies:",
+    "Mod ID: 'balm', Requested by: 'waystones', Expected range: '[21.0.39,)', Actual version: '[MISSING]'"
+  ],
+  "observed_not_proven_repair": true,
+  "initial_hardening_compatibility_failure": "read-only nsswitch/user-switch",
+  "first_real_run_seconds": 175,
+  "first_real_run_exit": 137,
+  "initial_fault_boot_status": "mandatory_dependency_error_logged_then_external_timeout",
+  "world_source": "disposable_empty_new_world",
+  "production_modified": false
+}

@@ -1,0 +1,14 @@
+# Standalone Hermes terminal profile example, not an automatic edit to ~/.hermes.
+# The model and gateway may run on host; terminal/file tools run INSIDE Docker.
+# Offline read-only first. Do not pass host credentials, Docker socket, or writable world volumes.
+terminal:
+  backend: docker
+  docker_image: "nousresearch/hermes-sandbox:desktop"
+  docker_mount_cwd_to_workspace: false
+  container_persistent: false
+  docker_network: false
+  docker_forward_env: []
+  docker_volumes: []
+  container_cpu: 2
+  container_memory: 2048
+  timeout: 120

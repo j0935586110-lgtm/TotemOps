@@ -1,0 +1,9 @@
+TotemOps
+Copyright 2026 TotemOps contributors
+
+This project is distributed under the Apache License, Version 2.0.
+Third-party software invoked as external tools (including mc-image-helper,
+mc-monitor, packwiz, and Minecraft server software) is not relicensed by
+this project. Their separate licenses and terms continue to apply.
+Friend-maintained repositories, user-provided mods, worlds, patches and
+configuration remain owned by their respective rights holders.

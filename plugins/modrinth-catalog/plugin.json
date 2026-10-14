@@ -1,0 +1,16 @@
+{
+  "name": "modrinth-catalog",
+  "description": "Search Modrinth and verify matching game/loader release metadata, no downloads",
+  "entry": [
+    "python3",
+    "plugin.py"
+  ],
+  "commands": [
+    "search"
+  ],
+  "capabilities": [
+    "network-read",
+    "catalog-search"
+  ],
+  "timeout_seconds": 45
+}

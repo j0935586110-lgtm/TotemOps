@@ -1,0 +1,15 @@
+{
+  "name": "launcher-plan",
+  "description": "Opt-in, offline Prism Launcher client plan; no Minecraft launch, update or installer build",
+  "entry": [
+    "python3",
+    "plugin.py"
+  ],
+  "commands": [
+    "inspect"
+  ],
+  "capabilities": [
+    "read-only"
+  ],
+  "timeout_seconds": 5
+}

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "providers": [
+    {
+      "id": "modal",
+      "enabled": false,
+      "tasks": [
+        "stage",
+        "server"
+      ],
+      "memory_mb": 8192,
+      "disk_mb": 16384
+    },
+    {
+      "id": "e2b",
+      "enabled": false,
+      "tasks": [
+        "stage",
+        "server"
+      ],
+      "memory_mb": 4096,
+      "disk_mb": 10240
+    },
+    {
+      "id": "daytona",
+      "enabled": false,
+      "tasks": [
+        "stage",
+        "server"
+      ],
+      "memory_mb": 8192,
+      "disk_mb": 16384
+    },
+    {
+      "id": "github-actions",
+      "enabled": false,
+      "tasks": [
+        "stage"
+      ],
+      "memory_mb": 4096,
+      "disk_mb": 14336
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "F1": {
+    "type": "missing_dependency",
+    "confidence": "suspected",
+    "next": "Install missing dependency 'balm' for mod 'waystones'"
+  },
+  "F2": {
+    "type": "client_only_on_server",
+    "confidence": "suspected",
+    "next": "Remove client-only mod from server or fix mod to not load client classes on dedicated server"
+  },
+  "F3": {
+    "type": "mixin_injection_conflict",
+    "confidence": "suspected",
+    "next": "Check mixin target method exists; update mixin or conflicting mods"
+  },
+  "F4": {
+    "type": "wrong_java_runtime",
+    "confidence": "suspected",
+    "next": "Use Java 21 runtime (class version 65.0 requires Java 21, runtime only recognizes through 61.0/Java 17)"
+  },
+  "F5": {
+    "type": "loader_version_conflict",
+    "confidence": "suspected",
+    "next": "Remove Fabric API (Fabric loader mod) from NeoForge server; use NeoForge-compatible mods only"
+  }
+}

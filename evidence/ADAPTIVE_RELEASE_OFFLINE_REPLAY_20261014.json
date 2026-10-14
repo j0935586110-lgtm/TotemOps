@@ -1,0 +1,95 @@
+{
+  "evidence": "SIMULATED_SIGNED_RELEASES_ONLY",
+  "run_date": "2026-10-14",
+  "source_purpose": "release compatibility logic for Barian Forge 1.20.1 and MC8 NeoForge 1.21.1",
+  "all_urls_in_signed_success_scenarios": "updates.example.org is a non-operational example, not a deployed service",
+  "owner_signing_key": "ephemeral generated in deleted temporary directory",
+  "installed_games_changed": false,
+  "friend_repositories_changed": false,
+  "live_site_contacted": false,
+  "http_download_performed": false,
+  "setup_exe_built": false,
+  "scenarios": [
+    {
+      "scenario": "barian_add_mod_same_runtime",
+      "result": {
+        "status": "READY",
+        "action": "RUN_EXISTING_UPDATER",
+        "reason": "compatible_existing_instance_requires_normal_mod_sync",
+        "signature_verified": true
+      }
+    },
+    {
+      "scenario": "barian_forge_patch",
+      "result": {
+        "status": "REVIEW_REQUIRED",
+        "action": "MIGRATION_TEST_REQUIRED",
+        "reason": "minecraft_loader_or_java_changed",
+        "signature_verified": true
+      }
+    },
+    {
+      "scenario": "barian_java_upgrade",
+      "result": {
+        "status": "REVIEW_REQUIRED",
+        "action": "MIGRATION_TEST_REQUIRED",
+        "reason": "minecraft_loader_or_java_changed",
+        "signature_verified": true
+      }
+    },
+    {
+      "scenario": "barian_update_protocol_change",
+      "result": {
+        "status": "REVIEW_REQUIRED",
+        "action": "INSTALLER_RECONFIG_REQUIRED",
+        "reason": "trusted_updater_endpoint_or_contract_changed",
+        "signature_verified": true
+      }
+    },
+    {
+      "scenario": "barian_http_api_legacy",
+      "result": {
+        "status": "BLOCK",
+        "action": "DO_NOT_RUN",
+        "reason": "untrusted_sync_feed",
+        "signature_verified": false
+      }
+    },
+    {
+      "scenario": "barian_conflicting_release",
+      "result": {
+        "status": "BLOCK",
+        "action": "DO_NOT_RUN",
+        "reason": "same_sequence_conflicting_manifest",
+        "signature_verified": true
+      }
+    },
+    {
+      "scenario": "mc8_add_mod_same_runtime",
+      "result": {
+        "status": "READY",
+        "action": "RUN_EXISTING_UPDATER",
+        "reason": "compatible_existing_instance_requires_normal_mod_sync",
+        "signature_verified": true
+      }
+    },
+    {
+      "scenario": "mc8_change_loader_version",
+      "result": {
+        "status": "REVIEW_REQUIRED",
+        "action": "MIGRATION_TEST_REQUIRED",
+        "reason": "minecraft_loader_or_java_changed",
+        "signature_verified": true
+      }
+    },
+    {
+      "scenario": "mc8_bad_java",
+      "result": {
+        "status": "BLOCK",
+        "action": "DO_NOT_RUN",
+        "reason": "java_too_old_for_minecraft",
+        "signature_verified": false
+      }
+    }
+  ]
+}

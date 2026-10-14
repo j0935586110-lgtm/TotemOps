@@ -1,0 +1,48 @@
+{
+  "assets": [
+    {
+      "bytes": 857181,
+      "name": "multiverse-1.0.2.jar",
+      "sha256": "2610463b85c6087a0400a51e8a7a70e23885a90795c98b8643c1c73e4e1e8ade"
+    },
+    {
+      "bytes": 13438337,
+      "name": "neoauthreloaded-neoforge-1.21.1-4.6.0.jar",
+      "sha256": "fc342729a656240f5e0a77da37439db7e5638671af5ca6240f144b76917237e1"
+    }
+  ],
+  "imports": [
+    {
+      "existing_blobs": 0,
+      "name": "a",
+      "new_blobs": 1
+    },
+    {
+      "existing_blobs": 0,
+      "name": "b",
+      "new_blobs": 1
+    },
+    {
+      "existing_blobs": 1,
+      "name": "second",
+      "new_blobs": 0
+    }
+  ],
+  "jar_executed": false,
+  "mode": "local_offline_cas_cli_real_github_release_jars",
+  "restore_seconds": 0.0054,
+  "restore_status": "CAS_RESTORED",
+  "stats": {
+    "blobs": 2,
+    "deduplicated_bytes": 857181,
+    "manifests": 3,
+    "referenced_bytes": 15152699,
+    "status": "PASS",
+    "stored_bytes": 14295518
+  },
+  "status": "PASS",
+  "tested_asset_count": 2,
+  "verify_status": "CAS_VALID",
+  "wall_seconds": 0.5774,
+  "world_modified": false
+}

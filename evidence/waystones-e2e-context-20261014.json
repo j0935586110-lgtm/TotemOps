@@ -1,0 +1,27 @@
+{
+  "case": "TotemOps NeoForge 1.21.1 Waystones + Balm, authorized disposable sandbox",
+  "utc_started": "2026-10-13T19:11:48Z",
+  "utc_finished": "2026-10-13T19:15:58Z",
+  "wall_seconds": 250,
+  "execution_exit": 2,
+  "result": "BLOCK",
+  "reason": "sandbox_readiness_timeout",
+  "staged_artifacts": 2,
+  "artifacts_official_sha512_pass": true,
+  "server_activity_observed": [
+    "NeoForge 21.1.259 installer",
+    "NeoForge mod loading",
+    "Balm registering Waystones configuration",
+    "new sandbox world generation"
+  ],
+  "minecraft_protocol_ready_verified": false,
+  "sandbox_container_removed": true,
+  "original_mcops_vanilla_test_state": "exited",
+  "evidence": [
+    "waystones-stage-20261014.json",
+    "waystones-sha512-20261014.json",
+    "waystones-e2e-block-20261014.json"
+  ],
+  "limitation": "Original E2E JSON total_seconds reflected staging only (14.85). Current code measures elapsed time until timeout verdict, excluding container cleanup. This attempt has NOT been rerun.",
+  "next": "Use fast STAGED_ONLY for routine checks; optimize/cache loader bootstrap before rerunning 3GB / 2 CPU Minecraft cold boot."
+}

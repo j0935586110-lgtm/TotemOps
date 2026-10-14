@@ -1,0 +1,27 @@
+{
+  "F1": {
+    "type": "missing_dependency",
+    "confidence": "high",
+    "next": "Install Balm (required by Waystones) matching your Minecraft/NeoForge versions; do not remove Waystones unless intended."
+  },
+  "F2": {
+    "type": "client_only_on_server",
+    "confidence": "high",
+    "next": "Identify the mod loading net.minecraft.client.Minecraft on the dedicated server; update or remove it server-side, ensure client-only mods are not in the server mods folder."
+  },
+  "F3": {
+    "type": "mixin_injection_conflict",
+    "confidence": "high",
+    "next": "Note the failing mixin (WorldMixin) and owning mod; check for conflicting mods targeting the same method/class, update the mixin owner or remove conflicts—do not assume the listed fix is tested."
+  },
+  "F4": {
+    "type": "wrong_java_runtime",
+    "confidence": "high",
+    "next": "Run the server on a newer JRE (class file 65 ⇒ Java 21) rather than Java 17; verify launcher/JVM path and reinstall if needed."
+  },
+  "F5": {
+    "type": "loader_version_conflict",
+    "confidence": "high",
+    "next": "Fabric API is not valid on NeoForge 21.1.259; remove Fabric/loader-specific mods from the NeoForge server and use NeoForge equivalents (NeoAuthReloaded is fine)."
+  }
+}

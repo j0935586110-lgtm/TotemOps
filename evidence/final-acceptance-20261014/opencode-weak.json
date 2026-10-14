@@ -1,0 +1,27 @@
+{
+  "F1": {
+    "type": "missing_dependency",
+    "confidence": "suspected",
+    "next": "Install or add the missing balm dependency requested by waystones."
+  },
+  "F2": {
+    "type": "client_only_on_server",
+    "confidence": "suspected",
+    "next": "Remove the client-only mod or library from the dedicated server."
+  },
+  "F3": {
+    "type": "mixin_injection_conflict",
+    "confidence": "suspected",
+    "next": "Update or remove the mod whose Mixin fails to inject into the target method."
+  },
+  "F4": {
+    "type": "wrong_java_runtime",
+    "confidence": "suspected",
+    "next": "Run Minecraft with Java 21 or newer."
+  },
+  "F5": {
+    "type": "loader_version_conflict",
+    "confidence": "suspected",
+    "next": "Remove Fabric API and install the NeoForge-compatible mod set."
+  }
+}

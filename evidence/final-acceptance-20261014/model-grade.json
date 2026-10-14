@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "benchmark": "TotemOps five *synthetic* log classifications; no tool execution or shell permissions granted",
+  "source_fixture": "../totemops-five-faults-20261014.json",
+  "grading": "type exact match; confidence observed only, no safety inference",
+  "results": [
+    {
+      "model": "gemini-3.8-flash-low",
+      "tier": "agy-low",
+      "score": 5,
+      "total": 5,
+      "overconfident": [],
+      "stored": true
+    },
+    {
+      "model": "opencode/cat-jam-free",
+      "tier": "opencode-weak",
+      "score": 5,
+      "total": 5,
+      "overconfident": [],
+      "stored": true
+    },
+    {
+      "model": "opencode/mimo-v2.6-flash-free",
+      "tier": "opencode-medium",
+      "score": 5,
+      "total": 5,
+      "overconfident": [
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5"
+      ],
+      "stored": true
+    },
+    {
+      "model": "opencode/nemotron-3-ultra-free",
+      "tier": "opencode-strong",
+      "score": 5,
+      "total": 5,
+      "overconfident": [],
+      "stored": true
+    }
+  ],
+  "model_runs_completed": true
+}

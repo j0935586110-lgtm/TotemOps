@@ -1,0 +1,29 @@
+# Generated tools, private configurations and sandbox data
+.sdk-probe-venv/
+.local-tools/
+.fixtures/
+releases/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.tar.gz
+.env
+.env.*
+*.pem
+*.key
+*.token
+*.log
+
+# Game worlds and generated binaries are not redistributed
+world/
+playerdata/
+*.jar
+*.exe
+*.zip
+*.bundle
+.venv/

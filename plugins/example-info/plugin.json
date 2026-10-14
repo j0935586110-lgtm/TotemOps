@@ -1,0 +1,16 @@
+{
+  "name": "example-info",
+  "description": "Read-only demonstration of an opt-in extension",
+  "entry": [
+    "python3",
+    "plugin.py"
+  ],
+  "commands": [
+    "about",
+    "echo"
+  ],
+  "capabilities": [
+    "read-only"
+  ],
+  "timeout_seconds": 5
+}

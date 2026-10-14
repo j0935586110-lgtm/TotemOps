@@ -1,0 +1,6 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# Run TotemOps directly from the checked out repository, no installation needed.
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+exec python3 "$root/tools/totem_operator.py" "$@"
