@@ -43,13 +43,13 @@ jobs:
             'run/mods/balm-neoforge-1.21.1-21.0.66.jar' | sha256sum -c -
 
       - name: Run a real NeoForge 1.21.1 CLIENT and load a single-player world
-        uses: headlesshq/mc-runtime-test@fbafe02f89f4f13682e7b16dbcee6b6a43f4faca # 4.5.1
+        uses: headlesshq/mc-runtime-test@dfc8a2a0145f723b01abda5e1cf59eaba516d128 # 5.0.0
         with:
           mc: '1.21.1'
           modloader: neoforge
           java: '21'
           mc-runtime-test: neoforge
-          mc-runtime-test-version: 4.5.2
+          mc-runtime-test-version: 5.0.1
           cache-mc: 'false'
           dummy-assets: 'true'
           xvfb: 'true'
