@@ -5,6 +5,17 @@ This repository is an Apache-2.0 Minecraft assistant, not a self-updating server
 **Canonical skill:** `.agents/skills/totem-ops/SKILL.md`.
 **Chinese user manual:** `README.md`. **English:** `README.en.md`.
 
+**AGY native installation:** root `plugin.json` and `skills/totem-ops/SKILL.md`
+make the repository directly installable through the official
+`agy plugin install https://github.com/j0935586110-lgtm/TotemOps` pipeline.
+The Agent must not infer that merely reading a URL grants install rights.
+`agy plugin uninstall totem-ops` removes its Skill registration, but does not
+undo any later explicitly authorized Minecraft changes.
+For first-use requirements read `docs/AGY_FIRST_RUN.md`.
+For in-sandbox patch tasks prefer released compatible versions, then
+the current coding Agent; REA is *optional authorized investigation*,
+not an unconditional Minecraft bytecode patching engine.
+
 For authorized development of friends' public Minecraft repos, load `.agents/skills/minecraft-repo-maintainer/SKILL.md` on demand, then run `python3 tools/totem_operator.py maintainer profiles|inspect`. This is a read-only project-aware facade; do not use it as proof that a Gradle build or GUI client ran. Profiles are in `profiles/`.
 
 For smaller/weaker models: prefer the read-only `totem-ops quick diagnose|inspect` and `totem-ops preflight` initially. When available, run agent Shell/file tools in a Hermes Docker backend or OpenClaw sandbox.mode=all session sandbox, with no host Docker socket or writable private world mount. Never call Docker directly to bypass a `BLOCK`. The CLI environmental gate is authoritative for sandbox execution, but not for arbitrary shell commands. Host approval and OS isolation are independent requirements.

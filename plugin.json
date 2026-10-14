@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "totem-ops",
+  "description": "TotemOps: read-only Minecraft crash and modpack diagnosis, official tool reuse, opt-in reversible sandbox workflows. No hooks or auto-update."
+}

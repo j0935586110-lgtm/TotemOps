@@ -8,6 +8,14 @@
 
 ### Minecraft 出問題，不用再靠猜。先找原因、確認版本，再決定怎麼修。
 
+**AGY 傻瓜安裝（可以完整停用／解除安裝）：** 把這個 [GitHub 倉庫](https://github.com/j0935586110-lgtm/TotemOps) 貼給 AGY 並要求它以原生 Plugin 安裝；最可靠的指令是：
+
+```sh
+agy plugin install https://github.com/j0935586110-lgtm/TotemOps
+```
+
+裝完即可用對話請 AGY 檢查 Minecraft 日誌；要撤銷可執行 `agy plugin uninstall totem-ops`。單純貼網址**不保證**每個 Agent 會自動安裝，也不代表有權修改正式世界。[第一次使用、沙箱修復與可逆說明](docs/AGY_FIRST_RUN.md)。
+
 **給 Minecraft 服主與模組作者的開源小幫手。** 把很長的錯誤日誌、雜亂的模組版本與繁瑣的檢查工作整理成一份看得懂、有根據的報告。
 
 <p align="center">

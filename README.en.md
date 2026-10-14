@@ -8,6 +8,14 @@
 
 ### When Minecraft breaks, stop guessing. Find the cause, check versions, and test before changing anything.
 
+**Easy, reversible AGY plugin install:** Ask AGY to install this GitHub repository as a native Plugin, or use:
+
+```sh
+agy plugin install https://github.com/j0935586110-lgtm/TotemOps
+```
+
+Then ask AGY to inspect a Minecraft log. Remove it with `agy plugin uninstall totem-ops`. Pasting a URL alone cannot guarantee that every Agent will install it; no live-server changes are authorized by plugin installation. [First-use and rollback guide](docs/AGY_FIRST_RUN.md).
+
 **An open-source helper for Minecraft server owners and mod developers.** Turn huge crash logs, confusing mod dependencies and risky updates into clear, evidence-backed next steps.
 
 <p align="center">

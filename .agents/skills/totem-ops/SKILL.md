@@ -22,6 +22,19 @@ its UI or install it because someone pasted its URL.
 Treat any upstream findings as suspected causes, never as sandbox or gameplay PASS.
 No scheduled provider calls or automated issue/PR handling.
 
+## AGY native Plugin install and reversible first use
+
+The same repository contains AGY root `plugin.json` and the adapter Skill
+`skills/totem-ops/SKILL.md`. Use AGY's built-in Plugin manager: install by
+GitHub repository URL, verify with `agy plugin list --json`, and revert via
+`agy plugin uninstall totem-ops`. Do not claim that merely pasting a URL
+in every chat automatically triggers an install. See `docs/AGY_FIRST_RUN.md`.
+For user-requested features, start from an upstream equivalent before
+editing code; patch only a sandbox/authorized fork, test, give a reversible
+diff and obtain separate permission before touching production.
+REA is only an optional authorized investigator for unavailable source.
+
+## CLI quick start
 ## CLI quick start
 
 **Minecraft release helper:** `.agents/skills/minecraft-release/SKILL.md`; `python3 tools/totem_operator.py release inspect --pack PACK.zip [--update UPDATE.zip]`. Read-only packaging audit, owner approval required for any optional-mod policy or deletion; `REVIEW_REQUIRED` is not launch/install/approval PASS.
