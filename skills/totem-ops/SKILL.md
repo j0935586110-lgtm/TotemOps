@@ -37,8 +37,12 @@ metadata first. This is a Minecraft-specific Skill, NOT another AI harness.
 Run this bounded engineering loop ON DEMAND, not as a background process:
 
 A. DISCOVER — confirm Minecraft version and loader from available metadata.
-   Check for an existing released mod or packwiz/Modrinth solution. Prefer
-   provenance, targeted log analysis and upstream issues over new code.
+   Check compatible released mods, packwiz/Modrinth, and the upstream repo's
+   **open and merged pull requests** before writing a patch. Look for existing
+   targeted regression tests, maintainer cautions and exact target versions.
+   The same bug may already have an unmerged PR. Never infer version
+   compatibility or release availability from a PR title alone.
+   For a real reuse-first example, see docs/UPSTREAM_REUSE_TRIAL_2472.md.
 B. PLAN — smallest change, exact acceptance test, touched paths, authorization
    scope, backup and undo. No unrelated accounts, wallets, cloud resources.
 C. EXPERIMENT — use isolated disposable worktrees and owner-authorized
@@ -51,10 +55,14 @@ D. PATCH — if no compatible upstream solution exists and rights permit code
    REA https://github.com/morluto/rea may optionally inspect an authorized
    binary when source is unavailable; it is NOT a patch/deploy engine and
    does not guarantee Minecraft compatibility. Never install it by default.
-E. VERIFY — focused tests, and (for actual Minecraft repairs) matching
-   Java/loader/client versions in a disposable environment. Protocol READY
-   is not an in-game feature test. PROTOCOL_READY is NOT GAMEPLAY_VERIFIED.
-   Report failed tests as failed.
+E. VERIFY — follow the upstream project's own CI build order first
+   (e.g. NeoForge may require :neoforge:setup before JUnit). Establish
+   unchanged baseline results, then targeted fail-before/pass-after tests
+   for the reported bug plus full regression. Existing broad tests passing
+   on a naive patch does not prove the reported edge case is fixed.
+   For actual Minecraft repairs, test matching game/loader/client versions
+   in a disposable environment. Protocol READY is not an in-game feature
+   test. PROTOCOL_READY is NOT GAMEPLAY_VERIFIED. Report failures as failures.
 F. HANDOFF — deliver evidence, changed files, diff, commands, versions,
    what was NOT tested, and exact undo. Leave fixes in an isolated
    fork/sandbox until the server owner authorizes production application.

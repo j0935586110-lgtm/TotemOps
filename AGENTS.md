@@ -20,6 +20,12 @@ For authorized development of friends' public Minecraft repos, load `.agents/ski
 
 For smaller/weaker models: prefer the read-only `totem-ops quick diagnose|inspect` and `totem-ops preflight` initially. When available, run agent Shell/file tools in a Hermes Docker backend or OpenClaw sandbox.mode=all session sandbox, with no host Docker socket or writable private world mount. Never call Docker directly to bypass a `BLOCK`. The CLI environmental gate is authoritative for sandbox execution, but not for arbitrary shell commands. Host approval and OS isolation are independent requirements.
 
+Before implementing a new patch, search existing Issue discussion and upstream
+open/merged PRs, target release compatibility and regression tests. Use native
+project CI setup, not hand-written substitutes for missing Gradle/Minecraft
+dependencies. See docs/UPSTREAM_REUSE_TRIAL_2472.md for an audited example
+of declining an unsafe quick fix because a tested upstream solution exists.
+
 When asked to diagnose, inspect, plan, deploy, or extend TotemOps:
 1. Read the canonical skill on demand, then call `python3 tools/totem_operator.py --help` and the relevant CLI subcommand. Do not load all history documents.
 2. Choose existing tools and opt-in plugins before writing a new downloader, profiler, mod solver or server manager.

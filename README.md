@@ -30,7 +30,7 @@ agy plugin install https://github.com/j0935586110-lgtm/TotemOps
   <a href="https://github.com/j0935586110-lgtm/TotemOps/releases">版本下載</a>
 </p>
 
-**現有工具優先，不重複造輪子：** 模組版本與依賴優先使用 [Modrinth](https://modrinth.com/)；Minecraft 崩潰問題可參考 [mclo.gs](https://mclo.gs/) 與 [Crash Assistant](https://github.com/KostromDan/Crash-Assistant)。不死圖騰重點是整合分析、保留證據、執行授權後的沙箱驗證，而不是取代這些成熟工具。[整合邊界與隱私說明](docs/EXISTING_TOOL_REUSE.md)。
+**現有工具優先，不重複造輪子：** 模組版本與依賴優先使用 [Modrinth](https://modrinth.com/)；Minecraft 崩潰問題可參考 [mclo.gs](https://mclo.gs/) 與 [Crash Assistant](https://github.com/KostromDan/Crash-Assistant)。不死圖騰重點是整合分析、保留證據、執行授權後的沙箱驗證，而不是取代這些成熟工具。[整合邊界與隱私說明](docs/EXISTING_TOOL_REUSE.md)。 **上游已有修補就優先借鏡，不再重做：** [NeoForge 真實 Issue #2472 驗證與上游 PR #3331 對照](docs/UPSTREAM_REUSE_TRIAL_2472.md)。
 
 > **目前是 v0.1.0-alpha.1 開發預覽版。** 已可做唯讀分析與部分經授權的沙箱實驗；**不是**一鍵自動修好所有 Minecraft，也**不是**讓玩家雙擊就能遊玩的正式安裝器。
 

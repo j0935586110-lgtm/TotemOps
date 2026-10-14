@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "case_id": "neoforged-neoforge-2472",
+  "recorded_date": "2026-10-15",
+  "decision": "REUSE_UPSTREAM_PR_TESTS_BEFORE_CUSTOM_PATCH",
+  "issue": {
+    "repo": "neoforged/NeoForge",
+    "number": 2472,
+    "url": "https://github.com/neoforged/NeoForge/issues/2472",
+    "observed_state": "open",
+    "label": "help wanted",
+    "target_minecraft": "1.21.1"
+  },
+  "upstream_solution": {
+    "primary_pr": "https://github.com/neoforged/NeoForge/pull/3331",
+    "observed_state": "open",
+    "head_sha": "78959a88a8f6a34ba4157e4bb651b4f000f7edb7",
+    "minecraft": "26.2",
+    "java": 25,
+    "supporting_pr": "https://github.com/neoforged/NeoForge/pull/3332",
+    "existing_test_sources": [
+      "tests/src/junit/java/net/neoforged/neoforge/unittest/KeyMappingModifierHelperTest.java",
+      "tests/src/junit/java/net/neoforged/neoforge/unittest/KeyMappingLookupTest.java"
+    ],
+    "upstream_ci": {
+      "pr_gametests_run": 30637823776,
+      "pr_build_run": 30637817444,
+      "observed_conclusion": "success",
+      "observed_steps": [
+        "Build with Gradle",
+        "Run JUnit tests with Gradle",
+        "Run game tests with Gradle",
+        "Run production client self-test",
+        "Run production server self-test"
+      ]
+    }
+  },
+  "local_baseline": {
+    "head_sha": "3cae64530de368936d4c07497d3f0a25e2f9ffec",
+    "branch": "1.21.1",
+    "java": 21,
+    "gradle": "9.8.1",
+    "moddevgradle": "2.0.115",
+    "status": "BASELINE_UNIT_PASS",
+    "source_modified": false,
+    "official_setup": "PASS",
+    "official_junit": {
+      "tests": 77,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "real_gui_reproduction": "NOT_RUN"
+  },
+  "naive_patch_control": {
+    "hypothesis": "KeyModifier.NONE always returns true",
+    "status": "REJECTED_AFTER_REUSE_REVIEW",
+    "patch_sha256": "570fef5bc3789f6ccae8ae5144a781a5eb8513cdfc93d38ed2ed808c67e476bd",
+    "java_build": "PASS",
+    "existing_junit": {
+      "tests": 77,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted_keymapping_tests": "NOT_PRESENT_IN_1_21_1_BASELINE",
+    "patch_applied_to_upstream": false,
+    "patch_applied_to_production": false,
+    "restored_clean_worktree": true
+  },
+  "scope": {
+    "gradle_setup_and_unit_tests": "verified locally",
+    "pr_ci_success": "verified from upstream GitHub Actions",
+    "pr_tests_run_locally": false,
+    "pr_26_2_backport_to_1_21_1": false,
+    "in_game_key_modifier_fix_verified": false,
+    "upstream_pr_opened_by_totemops": false,
+    "production_world_modified": false
+  }
+}

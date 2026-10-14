@@ -29,7 +29,7 @@ Then ask AGY to inspect a Minecraft log. Remove it with `agy plugin uninstall to
   <a href="https://github.com/j0935586110-lgtm/TotemOps/releases">Releases</a>
 </p>
 
-**Reuse established tools first:** [Modrinth](https://modrinth.com/) provides mod/version metadata; [mclo.gs](https://mclo.gs/) and [Crash Assistant](https://github.com/KostromDan/Crash-Assistant) provide existing crash analysis. TotemOps focuses on provenance, authorization and optional disposable-sandbox verification, not replacing mature tools. External log transfer is always opt-in. [Tool reuse and privacy boundaries](docs/EXISTING_TOOL_REUSE.md).
+**Reuse established tools first:** [Modrinth](https://modrinth.com/) provides mod/version metadata; [mclo.gs](https://mclo.gs/) and [Crash Assistant](https://github.com/KostromDan/Crash-Assistant) provide existing crash analysis. TotemOps focuses on provenance, authorization and optional disposable-sandbox verification, not replacing mature tools. External log transfer is always opt-in. [Tool reuse and privacy boundaries](docs/EXISTING_TOOL_REUSE.md). [Reproducible upstream-first case: NeoForge #2472 vs PR #3331](docs/UPSTREAM_REUSE_TRIAL_2472.md).
 
 > **Current release: v0.1.0-alpha.1 (developer preview).** Read-only diagnosis and some authorized sandbox experiments are available. This is **not** a universal autonomous repair tool or a playable one-click Minecraft client installer.
 

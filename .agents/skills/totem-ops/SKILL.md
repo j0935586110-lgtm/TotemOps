@@ -22,6 +22,23 @@ its UI or install it because someone pasted its URL.
 Treat any upstream findings as suspected causes, never as sandbox or gameplay PASS.
 No scheduled provider calls or automated issue/PR handling.
 
+## Existing PR / official CI reuse gate
+
+**Before developing any requested crash or feature patch**, inspect the
+target's official releases, upstream Issue discussion, open **and merged
+PRs**, published fixes and existing regression tests. Choose a compatible
+upstream solution before creating a new implementation. A related open PR
+is not a merged/released fix; record its version, commit and CI provenance.
+First run the project's own CI setup tasks in a disposable worktree, then
+verify the unmodified baseline and add failure-reproducing targeted tests.
+Do not trust a generic green test suite to prove a specific bug was fixed.
+A BUILD or upstream CI PASS is not GAMEPLAY_VERIFIED for a different Minecraft
+version; require matching-version behavior testing before claiming a repair.
+Use current Agent's Git/GitHub tools; do not install a separate crawler.
+This is on demand only and creates no monitoring or Issue backlog.
+The reproducible case is docs/UPSTREAM_REUSE_TRIAL_2472.md (Issue #2472,
+upstream PR #3331, 1.21.1 baseline vs 26.2/JDK25 PR).
+
 ## AGY native Plugin install and reversible first use
 
 The same repository contains AGY root `plugin.json` and the adapter Skill
