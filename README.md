@@ -53,7 +53,7 @@ cd TotemOps
 - Claude Code：`.claude/skills/totem-ops/SKILL.md`；AGY：`.agents/skills/totem-ops/SKILL.md`；根目錄 `SKILL.md` 是共用簡短規則。
 - `manifest --summary` 僅回傳少量 JSON，必要時才讀取完整報告。未知 Client／Server 相容性不自動分類。
 - `smoke` **僅檢查已存在、已授權的隔離 Docker 測試伺服器**，不自動建立／操作正式世界。發布仍需人類審核。
-- 原有的 **AGY plugin 安裝方式仍保留**，但需要驗證插件實際附帶程式碼和宿主執行權限；不默認付費模型或 J1。
+- **AGY 原生安裝已實測**：`agy plugin install https://github.com/j0935586110-lgtm/TotemOps`；檢查：`agy plugin list --json`；可逆移除：`agy plugin uninstall totem-ops`。以上在全新隔離 HOME 驗證，仍須授權讀取真實檔案與執行工具。
 
 ## 你是不是遇過這些事？
 

@@ -83,6 +83,11 @@ cd TotemOps</pre></li>
 <li><strong><span class="zh">Agent 自動發現 Skill；必要時明確指定</span><span class="en">Let your coding agent discover the Skill</span></strong>
 <p class="zh">Claude Code 使用 <code>.claude/skills/totem-ops/SKILL.md</code>，AGY 使用 <code>.agents/skills/totem-ops/SKILL.md</code>；共用工作流程在根目錄 <code>SKILL.md</code>。AGY 亦保留既有原生外掛安裝方式，惟安裝是否包含程式碼，仍須實際檢查。</p>
 <p class="en">Claude Code: <code>.claude/skills/totem-ops/SKILL.md</code>. AGY: <code>.agents/skills/totem-ops/SKILL.md</code>. Shared canonical workflow: root <code>SKILL.md</code>. Existing native AGY plugin onboarding is retained; verify the tools were actually installed.</p>
+<p class="zh">AGY 也可以直接用正式插件命令安裝（已在全新隔離環境實測成功，並驗證可解除安裝）：</p>
+<p class="en">AGY also supports the tested native plugin command (successfully installed and uninstalled in an isolated fresh profile):</p>
+<pre class="code">agy plugin install https://github.com/j0935586110-lgtm/TotemOps</pre>
+<p class="zh">使用後可透過 <code>agy plugin list --json</code> 確認啟用；解除安裝用 <code>agy plugin uninstall totem-ops</code>。仍須提供本機日誌／模組路徑並允許 Agent 執行工具。</p>
+<p class="en">Verify with <code>agy plugin list --json</code>; uninstall via <code>agy plugin uninstall totem-ops</code>. Actual file access and shell permissions are still required.</p>
 </li>
 <li><strong><span class="zh">提供真實日誌或模組資料夾，呼叫 CLI</span><span class="en">Provide actual files and run a deterministic CLI command</span></strong>
 <pre class="code">./bin/totem-ops manifest ./mods --json --summary</pre>

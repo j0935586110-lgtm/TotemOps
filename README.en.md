@@ -49,7 +49,7 @@ cd TotemOps
 ./bin/totem-ops smoke --help
 ```
 
-Claude Code discovers `.claude/skills/totem-ops/SKILL.md`, AGY discovers `.agents/skills/totem-ops/SKILL.md`, and the root `SKILL.md` is the shared workflow. `--summary` bounds the JSON; static metadata never automatically proves Client/Server compatibility or authorizes publishing. `smoke` only inspects an already-running **authorized disposable Docker server**. Existing AGY native plugin onboarding is retained; verify host access and installed program files before use.
+Claude Code discovers `.claude/skills/totem-ops/SKILL.md`, AGY discovers `.agents/skills/totem-ops/SKILL.md`, and the root `SKILL.md` is the shared workflow. `--summary` bounds the JSON; static metadata never automatically proves Client/Server compatibility or authorizes publishing. `smoke` only inspects an already-running **authorized disposable Docker server**. AGY native installation was verified in a disposable fresh user profile: `agy plugin install https://github.com/j0935586110-lgtm/TotemOps`; verify with `agy plugin list --json` and undo via `agy plugin uninstall totem-ops`. Local file/shell authorization remains necessary.
 
 ## Does any of this sound familiar?
 
