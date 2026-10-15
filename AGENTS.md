@@ -2,7 +2,7 @@
 
 This repository is an Apache-2.0 Minecraft assistant, not a self-updating server manager.
 **Source of truth:** this public repository is the current TotemOps project. Historical mc-server-ops code must not replace its CLI or safety gates. Do not publish, deploy or operate on someone else's server without the owner's explicit authorization.
-**Canonical skill:** `.agents/skills/totem-ops/SKILL.md`.
+**Canonical short workflow:** root `SKILL.md`. **AGY discovery:** `.agents/skills/totem-ops/SKILL.md`. **Claude discovery:** `.claude/skills/totem-ops/SKILL.md`. Start with `./bin/totem-ops manifest|crash|smoke`, retrieve compact JSON, and only expand on demand.
 **Chinese user manual:** `README.md`. **English:** `README.en.md`.
 
 **AGY native installation:** root `plugin.json` and `skills/totem-ops/SKILL.md`

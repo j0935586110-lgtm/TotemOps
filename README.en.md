@@ -35,6 +35,22 @@ Then ask AGY to inspect a Minecraft log. Remove it with `agy plugin uninstall to
 
 ---
 
+## One-minute developer start: Skills + CLI (no MCP required)
+
+**[Visual quick start / 繁體中文](https://j0935586110-lgtm.github.io/TotemOps/start.html?lang=en)** · **[Canonical Skill](SKILL.md)** · **[Private browser log triage](https://j0935586110-lgtm.github.io/TotemOps/diagnose.html)**
+
+Clone/open the checkout in Claude Code or AGY. **Pasting the GitHub URL in an ordinary chat does not clone or grant shell access.**
+
+```sh
+git clone https://github.com/j0935586110-lgtm/TotemOps.git
+cd TotemOps
+./bin/totem-ops manifest ./mods --json --summary
+./bin/totem-ops crash ./latest.log --json
+./bin/totem-ops smoke --help
+```
+
+Claude Code discovers `.claude/skills/totem-ops/SKILL.md`, AGY discovers `.agents/skills/totem-ops/SKILL.md`, and the root `SKILL.md` is the shared workflow. `--summary` bounds the JSON; static metadata never automatically proves Client/Server compatibility or authorizes publishing. `smoke` only inspects an already-running **authorized disposable Docker server**. Existing AGY native plugin onboarding is retained; verify host access and installed program files before use.
+
 ## Does any of this sound familiar?
 
 | The problem | How TotemOps can help | Status |

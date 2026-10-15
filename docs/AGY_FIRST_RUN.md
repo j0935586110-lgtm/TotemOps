@@ -1,3 +1,7 @@
+## 新增：三指令 / Skill 快速開始（2026-10-15）
+
+圖文使用方式：[TotemOps 開發者快速開始](https://j0935586110-lgtm.github.io/TotemOps/start.html)。保留本頁原有 AGY 原生插件安裝流程。當 AGY 已開啟 Clone 的倉庫，`.agents/skills/totem-ops/SKILL.md` 可導引至根目錄 `SKILL.md`，優先呼叫 `manifest --json --summary`、`crash --json`，有**已授權隔離伺服器**時才使用 `smoke`。AGY 插件安裝必須實測程式碼是否隨插件安裝，不能把 URL 本身當作執行權限。
+
 # TotemOps: 新手第一次使用（AGY）
 
 GitHub： https://github.com/j0935586110-lgtm/TotemOps

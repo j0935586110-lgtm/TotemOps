@@ -12,6 +12,16 @@ https://github.com/j0935586110-lgtm/TotemOps
 Be useful without extra questions or background jobs. Diagnose local logs and
 metadata first. This is a Minecraft-specific Skill, NOT another AI harness.
 
+## Compact entry (read-only by default)
+
+When the plugin checkout really includes the source scripts and the user provides local files, prefer:
+
+- `python3 tools/totem_operator.py manifest PATH --json --summary` (use `--layout modsync-v2` on the publishing root only if the user's folder layout actually matches).
+- `python3 tools/totem_operator.py crash LATEST.LOG --json` (suspected causes only).
+- `python3 tools/totem_operator.py smoke --help` (read-only inspection of an **already running** authorized disposable Docker Minecraft server; no production server access).
+
+If source scripts aren't present in the installed plugin, report that limitation: no silent fetching or shell execution of arbitrary remote content. For the complete concise workflow use root `SKILL.md` if it exists in this checkout; don't assume a URL pasted into chat is already cloned and executable.
+
 ## On first use
 
 1. Find the actual installed plugin directory via AGY plugin listing:

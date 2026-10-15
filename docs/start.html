@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#081522">
+<meta name="description" content="TotemOps 不死圖騰：給 Claude Code、Google Antigravity、OpenCode 的 Minecraft 伺服器診斷 Skill。Clone 倉庫、讀取 Skill、用三個 CLI 指令取得精簡 JSON。">
+<link rel="canonical" href="https://j0935586110-lgtm.github.io/TotemOps/start.html">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<title>開發者快速開始｜TotemOps 不死圖騰</title>
+<style>
+:root{color-scheme:dark;--bg:#081522;--panel:#102638;--panel2:#0b2030;--line:#2e5060;--mint:#6bf4bd;--white:#eef7f8;--muted:#abc2d0;--amber:#fbd5a0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 85% -12%,#145348 0,transparent 38%),linear-gradient(150deg,#081522,#0d1f30 62%,#0b2630);color:var(--white);font:16px/1.72 system-ui,-apple-system,"Noto Sans TC","PingFang TC",sans-serif}
+a{color:var(--mint)}a:hover{color:#a9ffdc}button{font:inherit;cursor:pointer}
+.wrap{width:min(1060px,calc(100% - 34px));margin:auto}
+nav{min-height:72px;border-bottom:1px solid #46677866;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 0}
+.brand{font-size:1.14rem;font-weight:800;letter-spacing:-.02em;text-decoration:none;color:#efffff}
+.links{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:.93rem}.links a{text-decoration:none}
+.lang{border:1px solid var(--line);padding:3px;border-radius:10px;display:inline-flex;gap:4px}
+.lang button{border:0;border-radius:7px;background:transparent;color:var(--muted);padding:3px 11px;font-weight:650}
+.lang button[aria-pressed=true]{background:var(--mint);color:#082d2c}
+main{padding-bottom:65px}.hero{padding:72px 0 35px}.eyebrow{color:var(--mint);text-transform:uppercase;font-size:.77rem;font-weight:900;letter-spacing:.18em;margin:0 0 14px}
+h1{font-size:clamp(2.25rem,5.2vw,4rem);line-height:1.18;letter-spacing:-.04em;margin:0 0 20px}
+h1 em{color:var(--mint);font-style:normal}
+.lead{font-size:clamp(1.04rem,1.8vw,1.21rem);max-width:760px;color:#c4d9dd;margin:0 0 27px}
+.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;border:1px solid #4d7e77;border-radius:12px;padding:10px 20px;margin-right:9px;margin-bottom:9px;min-height:47px;background:#123d38}
+.btn.primary{background:var(--mint);color:#082c2c;border-color:var(--mint)}
+.callout{margin:27px 0 0;border:1px solid #7c6549;background:#312819;border-radius:12px;padding:16px 19px;color:#f7dcaf}
+section{margin-top:39px}.section-head{font-size:1.6rem;line-height:1.3;letter-spacing:-.025em;margin:0 0 7px}.explain{color:var(--muted);margin:0 0 19px;max-width:820px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.panel{min-width:0;padding:22px;background:linear-gradient(160deg,#153044,#0b2131);border:1px solid var(--line);border-radius:16px}
+.panel h3{font-size:1.15rem;margin:0 0 9px;line-height:1.4}.panel p{color:var(--muted);margin:0 0 14px;font-size:.94rem}
+.code{background:#061522;border:1px solid #2b4858;border-radius:11px;padding:14px 16px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#b4f9d6;font:500 .86rem/1.67 ui-monospace,Menlo,Consolas,monospace;user-select:text}
+.tag{font-size:.73rem;border-radius:50px;border:1px solid #578379;color:#a8f4d5;padding:2px 9px;display:inline-block;margin-bottom:14px;font-weight:800}
+.ol{list-style:none;counter-reset:steps;display:grid;gap:15px;margin:0;padding:0}.ol li{counter-increment:steps;position:relative;padding:17px 21px 17px 67px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+.ol li:before{content:counter(steps);position:absolute;top:18px;left:20px;display:grid;place-items:center;width:29px;height:29px;border-radius:9px;background:#205344;color:#adfbdc;font-weight:900}.ol p{margin:4px 0 0;color:var(--muted)}
+.json{max-width:740px}.truth{border-left:3px solid #d8b37f;padding:13px 18px;background:#32291988;border-radius:0 10px 10px 0;color:#ead6b8}
+footer{border-top:1px solid var(--line);padding:25px 0;color:var(--muted);font-size:.85rem}
+html[lang="zh-Hant"] .en,html[lang="en"] .zh{display:none!important}
+:focus-visible{outline:3px solid #9bf8cc;outline-offset:3px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.hero{padding-top:48px}.panel{padding:20px}.links{gap:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav aria-label="Navigation">
+<a class="brand" href="index.html">✦ TotemOps / 不死圖騰</a>
+<div class="links">
+<a href="index.html"><span class="zh">首頁</span><span class="en">Home</span></a>
+<a href="diagnose.html"><span class="zh">免費日誌分析</span><span class="en">Try log analyzer</span></a>
+<a href="https://github.com/j0935586110-lgtm/TotemOps">GitHub ↗</a>
+<div class="lang" role="group" aria-label="Language">
+<button id="zh" type="button" aria-pressed="true" aria-label="繁體中文">中文</button>
+<button id="en" type="button" aria-pressed="false" aria-label="English">EN</button>
+</div>
+</div>
+</nav>
+<main>
+<header class="hero">
+<p class="eyebrow">Open source · Agent skills · Minecraft</p>
+<div class="zh">
+<h1>把 Minecraft 日誌交給工具，<br><em>把決策留給工程師。</em></h1>
+<p class="lead">TotemOps 不取代 Proxmox、Docker、原本的同步器，也不做另一套 AI 框架。讓 Claude Code、AGY、OpenCode 呼叫現有 CLI，取得小而可稽核的 JSON，再決定是否需要修正。</p>
+</div>
+<div class="en">
+<h1>Deterministic diagnostics.<br><em>Human-owned decisions.</em></h1>
+<p class="lead">TotemOps doesn't replace Proxmox, Docker or your Minecraft updater. Let Claude Code, AGY or OpenCode run a small CLI, read bounded JSON evidence, and decide whether a repair is warranted.</p>
+</div>
+<a class="btn primary" href="#setup"><span class="zh">三步驟開始 →</span><span class="en">Get started →</span></a>
+<a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/SKILL.md"><span class="zh">閱讀 Skill 原文 ↗</span><span class="en">Read canonical Skill ↗</span></a>
+<div class="callout">
+<span class="zh"><strong>貼網址 ≠ 已安裝。</strong> 普通聊天視窗只能研究公開程式碼。Agent 必須已開啟／Clone 倉庫、擁有經授權的檔案與終端機權限，才能真正執行 CLI。</span>
+<span class="en"><strong>Pasting a URL is not installation.</strong> A regular chat may inspect public code, but executing the CLI requires a checked-out repository and authorized local file/shell access.</span>
+</div>
+</header>
+<section id="setup">
+<h2 class="section-head"><span class="zh">開發者從這裡開始</span><span class="en">First-time setup</span></h2>
+<p class="explain"><span class="zh">Python 3.11+；靜態檢查和日誌分析不需要付費 AI、Java 伺服器或 Docker。</span><span class="en">Python 3.11+. Static mod checks and crash logs do not require paid AI, Java or Docker.</span></p>
+<ol class="ol">
+<li><strong><span class="zh">Clone 公開倉庫，或讓 Agent 開啟既有工作樹</span><span class="en">Clone the repository or open an existing checkout</span></strong>
+<pre class="code">git clone https://github.com/j0935586110-lgtm/TotemOps.git
+cd TotemOps</pre></li>
+<li><strong><span class="zh">Agent 自動發現 Skill；必要時明確指定</span><span class="en">Let your coding agent discover the Skill</span></strong>
+<p class="zh">Claude Code 使用 <code>.claude/skills/totem-ops/SKILL.md</code>，AGY 使用 <code>.agents/skills/totem-ops/SKILL.md</code>；共用工作流程在根目錄 <code>SKILL.md</code>。AGY 亦保留既有原生外掛安裝方式，惟安裝是否包含程式碼，仍須實際檢查。</p>
+<p class="en">Claude Code: <code>.claude/skills/totem-ops/SKILL.md</code>. AGY: <code>.agents/skills/totem-ops/SKILL.md</code>. Shared canonical workflow: root <code>SKILL.md</code>. Existing native AGY plugin onboarding is retained; verify the tools were actually installed.</p>
+</li>
+<li><strong><span class="zh">提供真實日誌或模組資料夾，呼叫 CLI</span><span class="en">Provide actual files and run a deterministic CLI command</span></strong>
+<pre class="code">./bin/totem-ops manifest ./mods --json --summary</pre>
+<p class="zh">Windows 可用 <code>bin\totem-ops.cmd</code>；不要把尚未存在的路徑當成已讀取。</p>
+<p class="en">On Windows use <code>bin\totem-ops.cmd</code>. The path must actually exist and be accessible.</p></li>
+</ol>
+</section>
+<section id="commands">
+<h2 class="section-head"><span class="zh">只要三個核心指令</span><span class="en">Three core CLI commands</span></h2>
+<p class="explain"><span class="zh">只有執行得到的證據才算數，不能把模型的推測當成驗收。</span><span class="en">Only observed tool output is evidence. An LLM's guess is not a test receipt.</span></p>
+<div class="grid">
+<article class="panel"><span class="tag">01 / MANIFEST</span>
+<h3><span class="zh">發布前檢查</span><span class="en">Pre-publish checks</span></h3>
+<p class="zh">掃 JAR 的 SHA-256、modId、宣告依賴、壞包與重複 ID；壓縮成簡短 JSON。不能憑 TOML 猜模組的完整 Client／Server 適用性。</p>
+<p class="en">Read JAR hashes, mod IDs, declared dependencies, bad ZIPs and collisions. Keep execution-side classification unknown until verified.</p>
+<pre class="code">./bin/totem-ops manifest ./mods --json --summary</pre></article>
+<article class="panel"><span class="tag">02 / CRASH</span>
+<h3><span class="zh">錯誤日誌診斷</span><span class="en">Crash triage</span></h3>
+<p class="zh">本地提取重點，不會把整份 latest.log 丟給模型或自動上傳到第三方。根因仍需重現驗證。</p>
+<p class="en">Extract bounded hints locally, without uploading or pasting the entire log into a model. Root causes remain hypotheses.</p>
+<pre class="code">./bin/totem-ops crash ./latest.log --json</pre></article>
+<article class="panel"><span class="tag">03 / SMOKE</span>
+<h3><span class="zh">沙箱開服驗證</span><span class="en">Isolated server smoke</span></h3>
+<p class="zh">僅檢查已存在、已授權且正在執行的隔離 Docker NeoForge 伺服器。不是自動部署、玩家登入或玩法保證。</p>
+<p class="en">Read-only inspection of an existing, authorized disposable NeoForge Docker server. Not deployment or gameplay proof.</p>
+<pre class="code">./bin/totem-ops smoke --help</pre></article>
+</div>
+</section>
+<section id="contract">
+<h2 class="section-head"><span class="zh">JSON 回報與發布守門規則</span><span class="en">JSON and release boundaries</span></h2>
+<div class="panel json">
+<pre class="code">{
+  "schema": 1,
+  "status": "REVIEW_REQUIRED",
+  "files_analyzed": 80,
+  "findings_count": 0,
+  "release_allowed": false,
+  "full_report_sha256": "…"
+}</pre>
+<p class="zh">上方為精簡輸出示意，非實際正式伺服器收據。<strong>BLOCK (退出碼 2)</strong> 代表已知攔截；<strong>REVIEW_REQUIRED (退出碼 3)</strong> 代表不自動放行。沒有「自動批准發布」指令。</p>
+<p class="en">Illustrative compact output, not a production test receipt. <strong>BLOCK (exit 2)</strong> blocks known issues; <strong>REVIEW_REQUIRED (exit 3)</strong> requires review. No auto-publish command exists.</p>
+</div>
+</section>
+<section>
+<div class="truth">
+<strong><span class="zh">目前沒有完成的部分</span><span class="en">What remains unverified</span></strong>
+<p class="zh">真實 Client 進服、Waystones GUI／傳送、完整的 NeoForge 新建冷啟動，以及朋友實際 Proxmox 工作流整合尚未全部驗收。Proxmox 不需要額外的通用管理介面。</p>
+<p class="en">Real client join, Waystones UI/teleport, fresh cold boot and deployment into your friends' Proxmox workflows remain separately unverified. No new Proxmox dashboard is needed.</p>
+</div>
+</section>
+<section>
+<h2 class="section-head"><span class="zh">想先體驗，不想 Clone？</span><span class="en">Want a browser-only demo?</span></h2>
+<p class="explain"><span class="zh">現有免費 latest.log 分析頁會在瀏覽器本機處理資料，不需要登入或安裝；功能與完整 Python CLI 不同。</span><span class="en">The existing browser log analyzer runs locally without login or installation. It is not identical to the Python CLI.</span></p>
+<a href="diagnose.html" class="btn primary"><span class="zh">瀏覽器免費分析 →</span><span class="en">Try log analyzer →</span></a>
+<a href="https://github.com/j0935586110-lgtm/TotemOps/issues" class="btn"><span class="zh">回報問題 ↗</span><span class="en">Report an issue ↗</span></a>
+</section>
+</main>
+<footer><span class="zh">TotemOps 不死圖騰 · Apache-2.0 · 非 Mojang／Microsoft 官方工具</span><span class="en">TotemOps · Apache-2.0 · Unofficial Minecraft community tool</span></footer>
+</div>
+<script>
+(function(){
+"use strict";
+var zh=document.getElementById("zh"),en=document.getElementById("en");
+function apply(lang){
+lang=lang==="en"?"en":"zh-Hant";
+document.documentElement.lang=lang;
+zh.setAttribute("aria-pressed",String(lang!=="en"));
+en.setAttribute("aria-pressed",String(lang==="en"));
+document.title=lang==="en"?"Get started · TotemOps Agent Skills":"開發者快速開始｜TotemOps 不死圖騰";
+}
+zh.addEventListener("click",function(){apply("zh-Hant")});
+en.addEventListener("click",function(){apply("en")});
+var requested=new URLSearchParams(window.location.search).get("lang");
+if(requested==="en")apply("en");
+})();
+</script>
+</body></html>

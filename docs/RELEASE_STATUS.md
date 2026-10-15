@@ -27,3 +27,11 @@
 ### Legal
 
 This unofficial community project is not endorsed by Mojang Studios or Microsoft. Minecraft assets, third-party mods and external tools are **not** relicensed or redistributed by Apache-2.0. See `LICENSE`, `NOTICE`, `SECURITY.md` and `CONTRIBUTING.md`.
+
+## Agent Skill / CLI / website update (2026-10-15)
+
+- Root `SKILL.md` + Claude Code `.claude/skills/totem-ops/SKILL.md` + AGY `.agents/skills/totem-ops/SKILL.md`; original `skills/totem-ops/SKILL.md` (AGY native plugin) retained.
+- Three commands: read-only `manifest`, `crash`, `smoke`. `manifest --summary` is bounded JSON; no automatic release approval.
+- Web docs: `docs/start.html`; legacy private browser log analysis in `docs/diagnose.html` unchanged.
+- `smoke` validates only an **existing isolated Docker server**, not a cold launch or verified player gameplay.
+- The public release and plugin auto-discovery need external smoke tests; do not claim that past test fixtures represent Barian/chyuaner's real Proxmox setup.

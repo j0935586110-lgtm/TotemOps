@@ -36,6 +36,25 @@ agy plugin install https://github.com/j0935586110-lgtm/TotemOps
 
 ---
 
+## 開發者一分鐘開始：Skill + CLI（不需 MCP）
+
+**[圖文快速開始（繁中／English）](https://j0935586110-lgtm.github.io/TotemOps/start.html)** · **[Skill 標準工作流程](SKILL.md)** · **[瀏覽器本機分析 latest.log](https://j0935586110-lgtm.github.io/TotemOps/diagnose.html)**
+
+先 Clone 專案並讓 Claude Code 或 AGY 開啟該工作樹；**只把倉庫網址貼到普通聊天視窗，不等於完成安裝或授權執行。**
+
+```sh
+git clone https://github.com/j0935586110-lgtm/TotemOps.git
+cd TotemOps
+./bin/totem-ops manifest ./mods --json --summary
+./bin/totem-ops crash ./latest.log --json
+./bin/totem-ops smoke --help
+```
+
+- Claude Code：`.claude/skills/totem-ops/SKILL.md`；AGY：`.agents/skills/totem-ops/SKILL.md`；根目錄 `SKILL.md` 是共用簡短規則。
+- `manifest --summary` 僅回傳少量 JSON，必要時才讀取完整報告。未知 Client／Server 相容性不自動分類。
+- `smoke` **僅檢查已存在、已授權的隔離 Docker 測試伺服器**，不自動建立／操作正式世界。發布仍需人類審核。
+- 原有的 **AGY plugin 安裝方式仍保留**，但需要驗證插件實際附帶程式碼和宿主執行權限；不默認付費模型或 J1。
+
 ## 你是不是遇過這些事？
 
 | 😵 遇到的麻煩 | 🛠️ 不死圖騰能幫忙什麼 | 目前進度 |

@@ -13,6 +13,17 @@ from totem_plugins import list_plugins, run_plugin
 
 def main(argv=None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
+    if args and args[0] == "crash":
+        if len(args) not in (2, 3) or (len(args) == 3 and args[2] != "--json") or args[1].startswith("--"):
+            print("usage: totem-ops crash LOG_PATH [--json]")
+            return 2
+        return main(["quick", "diagnose", args[1]])
+    if args and args[0] == "manifest":
+        from totem_modsync_manifest import main as manifest_main
+        return manifest_main(args[1:])
+    if args and args[0] == "smoke":
+        from totem_server_smoke import main as smoke_main
+        return smoke_main(args[1:])
     if args and args[0] in ("modules", "module"):
         from totem_modules import main as modules_main
         return modules_main(args[1:])
@@ -186,7 +197,7 @@ def main(argv=None) -> int:
         return 2 if outcome["status"] == "BLOCK" else 0
     if args and args[0] in ("-h", "--help"):
         print("TotemOps 不死圖騰 | Minecraft assistant")
-        print("Usage: totem-ops <doctor|inspect|diagnose|plan|plan-deploy|status|solve-and-verify|runtime-seed|cas|preflight|quick|route|maintainer|friend-flow|plugins>")
+        print("Usage: totem-ops <manifest|crash|smoke|doctor|inspect|diagnose|plan|plan-deploy|status|solve-and-verify|runtime-seed|cas|preflight|quick|route|maintainer|friend-flow|plugins>")
         print("       totem-ops plugins list | totem-ops plugins run NAME COMMAND --input '{}'")
         print("       totem-ops <command> --help")
         return 0
