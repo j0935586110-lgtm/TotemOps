@@ -8,14 +8,6 @@
 
 ### When Minecraft breaks, stop guessing. Find the cause, check versions, and test before changing anything.
 
-**Easy, reversible AGY plugin install:** Ask AGY to install this GitHub repository as a native Plugin, or use:
-
-```sh
-agy plugin install https://github.com/j0935586110-lgtm/TotemOps
-```
-
-Then ask AGY to inspect a Minecraft log. Remove it with `agy plugin uninstall totem-ops`. Pasting a URL alone cannot guarantee that every Agent will install it; no live-server changes are authorized by plugin installation. [First-use and rollback guide](docs/AGY_FIRST_RUN.md).
-
 **An open-source helper for Minecraft server owners and mod developers.** Turn huge crash logs, confusing mod dependencies and risky updates into clear, evidence-backed next steps.
 
 <p align="center">
@@ -29,27 +21,9 @@ Then ask AGY to inspect a Minecraft log. Remove it with `agy plugin uninstall to
   <a href="https://github.com/j0935586110-lgtm/TotemOps/releases">Releases</a>
 </p>
 
-**Reuse established tools first:** [Modrinth](https://modrinth.com/) provides mod/version metadata; [mclo.gs](https://mclo.gs/) and [Crash Assistant](https://github.com/KostromDan/Crash-Assistant) provide existing crash analysis. TotemOps focuses on provenance, authorization and optional disposable-sandbox verification, not replacing mature tools. External log transfer is always opt-in. [Tool reuse and privacy boundaries](docs/EXISTING_TOOL_REUSE.md). [Reproducible upstream-first case: NeoForge #2472 vs PR #3331](docs/UPSTREAM_REUSE_TRIAL_2472.md).
-
 > **Current release: v0.1.0-alpha.1 (developer preview).** Read-only diagnosis and some authorized sandbox experiments are available. This is **not** a universal autonomous repair tool or a playable one-click Minecraft client installer.
 
 ---
-
-## One-minute developer start: Skills + CLI (no MCP required)
-
-**[Visual quick start / 繁體中文](https://j0935586110-lgtm.github.io/TotemOps/start.html?lang=en)** · **[Canonical Skill](SKILL.md)** · **[Private browser log triage](https://j0935586110-lgtm.github.io/TotemOps/diagnose.html)**
-
-Clone/open the checkout in Claude Code or AGY. **Pasting the GitHub URL in an ordinary chat does not clone or grant shell access.**
-
-```sh
-git clone https://github.com/j0935586110-lgtm/TotemOps.git
-cd TotemOps
-./bin/totem-ops manifest ./mods --json --summary
-./bin/totem-ops crash ./latest.log --json
-./bin/totem-ops smoke --help
-```
-
-Claude Code discovers `.claude/skills/totem-ops/SKILL.md`, AGY discovers `.agents/skills/totem-ops/SKILL.md`, and the root `SKILL.md` is the shared workflow. `--summary` bounds the JSON; static metadata never automatically proves Client/Server compatibility or authorizes publishing. `smoke` only inspects an already-running **authorized disposable Docker server**. AGY native installation was verified in a disposable fresh user profile: `agy plugin install https://github.com/j0935586110-lgtm/TotemOps`; verify with `agy plugin list --json` and undo via `agy plugin uninstall totem-ops`. Local file/shell authorization remains necessary.
 
 ## Does any of this sound familiar?
 
@@ -131,8 +105,12 @@ The roadmap includes better mod/patch relationships, more real server crash repr
 
 Tell us which repetitive task takes the most time in [GitHub Issues](https://github.com/j0935586110-lgtm/TotemOps/issues). Please redact IPs, account details, tokens, and player information before posting logs.
 
+**Using coding agents or extending TotemOps?** See the [developer quick start (AGY / Claude Code / OpenCode)](https://j0935586110-lgtm.github.io/TotemOps/start.html?lang=en). Skill, JSON, Docker and safety specifics live there—not in this newcomer guide.
+
 <details>
 <summary><strong>For developers: evidence, safety and licensing</strong></summary>
+
+**Reuse established tools first:** [Modrinth](https://modrinth.com/) provides mod/version metadata; [mclo.gs](https://mclo.gs/) and [Crash Assistant](https://github.com/KostromDan/Crash-Assistant) provide existing crash analysis. TotemOps focuses on provenance, authorization and optional disposable-sandbox verification, not replacing mature tools. External log transfer is always opt-in. [Tool reuse and privacy boundaries](docs/EXISTING_TOOL_REUSE.md). [Reproducible upstream-first case: NeoForge #2472 vs PR #3331](docs/UPSTREAM_REUSE_TRIAL_2472.md).
 
 First-party source code is [Apache-2.0](LICENSE). Read [Security Policy](SECURITY.md), [Contributing](CONTRIBUTING.md) and [Alpha release scope](docs/RELEASE_STATUS.md). Minecraft assets, private mods and account data are not bundled.
 

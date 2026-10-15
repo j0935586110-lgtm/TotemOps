@@ -37,8 +37,28 @@ class SiteAndOnboardingTests(unittest.TestCase):
     def test_home_has_local_quickstart_link_and_translation(self):
         html=(DOCS/"index.html").read_text(encoding="utf-8")
         self.assertIn('href="start.html"',html)
-        self.assertIn('navSkill:"Agent 快速開始"',html)
-        self.assertIn('navSkill:"Agent quick start"',html)
+        self.assertIn('footerDev:"開發者文件"',html)
+        self.assertIn('footerDev:"Developer docs"',html)
+        self.assertNotIn('data-i18n="navSkill"',html)
+        self.assertNotIn('data-i18n="btnSkill"',html)
+        self.assertEqual(html.count('href="start.html"'),1)
+
+    def test_home_keeps_beginner_focus_and_footer_only_technical_entry(self):
+        html=(DOCS/"index.html").read_text(encoding="utf-8")
+        self.assertEqual(html.count('href="start.html"'),1)
+        footer=html.split("<footer>",1)[1]
+        self.assertIn('href="start.html"',footer)
+        header=html.split("<footer>",1)[0]
+        self.assertNotIn('data-i18n="btnSkill"',header)
+        self.assertNotIn('data-i18n="navSkill"',header)
+        self.assertIn('data-i18n="btnTry"',header)
+
+    def test_readmes_show_beginner_problem_before_developer_docs(self):
+        for name, start in (("README.md","## 你是不是遇過這些事？"),
+                            ("README.en.md","## Does any of this sound familiar?")):
+            readme=(ROOT/name).read_text(encoding="utf-8")
+            self.assertLess(readme.index(start),readme.index("start.html"))
+            self.assertNotIn("agy plugin install",readme)
 
     def test_quickstart_explains_all_three_with_limitations(self):
         page=(DOCS/"start.html").read_text(encoding="utf-8")
@@ -54,8 +74,10 @@ class SiteAndOnboardingTests(unittest.TestCase):
         for name in ("README.md","README.en.md"):
             s=(ROOT/name).read_text(encoding="utf-8")
             self.assertIn("start.html",s)
-            self.assertIn("SKILL.md",s)
-            self.assertIn("manifest ./mods",s)
+            self.assertIn("docs/ADVANCED_GUIDE.",s)
+            self.assertIn("start.html",s)
+            self.assertNotIn("agy plugin install",s)
+            self.assertNotIn("manifest ./mods",s)
         for path in ("SKILL.md",
                      ".agents/skills/totem-ops/SKILL.md",
                      ".claude/skills/totem-ops/SKILL.md",

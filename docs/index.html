@@ -101,7 +101,6 @@
       <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">✦</span><span>TotemOps <span style="color:#90e9bd">不死圖騰</span></span></a>
       <nav class="nav" aria-label="Site navigation">
         <a href="diagnose.html" data-i18n="navTry">免費分析日誌</a>
-        <a href="start.html" data-i18n="navSkill">Agent 快速開始</a>
         <a href="#pain" data-i18n="navPain">解決什麼</a>
         <a href="#how" data-i18n="navHow">怎麼運作</a>
         <a href="#status" data-i18n="navStatus">做到哪裡</a>
@@ -120,7 +119,6 @@
       <p class="lead" data-i18n="lead">不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。</p>
       <div class="actions">
         <a class="btn primary" href="diagnose.html" data-i18n="btnTry">免費分析 latest.log →</a>
-        <a class="btn" href="start.html" data-i18n="btnSkill">開發者 Skill／CLI 使用指南 →</a>
         <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps" data-i18n="btnRepo">查看開源專案 ↗</a>
       </div>
       <div class="alert" data-i18n="alert">⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。</div>
@@ -209,7 +207,6 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
         </div>
         <div class="actions">
           <a class="btn primary" href="diagnose.html" data-i18n="startTry">免安裝，立即體驗日誌診斷 →</a>
-          <a class="btn" href="start.html" data-i18n="btnSkill">開發者 Skill／CLI 使用指南 →</a>
           <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/README.md" id="guide-link" data-i18n="guide">閱讀中文使用說明 ↗</a>
           <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps/issues" data-i18n="issues">回報你遇到的問題 ↗</a>
         </div>
@@ -220,6 +217,7 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
     <div class="wrap">
       <div class="footerlinks">
         <a href="https://github.com/j0935586110-lgtm/TotemOps" data-i18n="footerGithub">GitHub 原始碼</a>
+        <a href="start.html" data-i18n="footerDev">開發者文件</a>
         <a href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/SECURITY.md" data-i18n="footerSecurity">安全政策</a>
         <a href="https://github.com/j0935586110-lgtm/TotemOps/blob/main/LICENSE" data-i18n="footerLicense">Apache-2.0 授權</a>
       </div>
@@ -231,7 +229,7 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
       "use strict";
       const dict={
         zh:{
-          skip:"跳到主要內容",navTry:"免費分析日誌",navSkill:"Agent 快速開始",btnSkill:"開發者 Skill／CLI 使用指南 →",navPain:"解決什麼",navHow:"怎麼運作",navStatus:"做到哪裡",navStart:"開始使用",eyebrow:"開源工具 · Minecraft 故障診斷",
+          skip:"跳到主要內容",navTry:"免費分析日誌",navPain:"解決什麼",navHow:"怎麼運作",navStatus:"做到哪裡",navStart:"開始使用",eyebrow:"開源工具 · Minecraft 故障診斷",
           headline1:"Minecraft 出問題？",headline2:"先找原因，再安全處理。",lead:"不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。",
           btnTry:"免費分析 latest.log →",btnRepo:"查看開源專案 ↗",startTry:"免安裝，立即體驗日誌診斷 →",btnRelease:"下載 Alpha 原始碼 ↗",alert:"⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。",
           heroCaption:"原創示意插畫，非 Minecraft 遊戲截圖",painKicker:"使用者痛點",painTitle:"你是不是也遇過這些麻煩？",painLead:"不想再一個個猜是什麼模組壞了、更新會不會讓整台伺服器不能玩？先從最常見的問題開始。",
@@ -257,10 +255,10 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
           startKicker:"開始使用",startTitle:"先用最簡單的方法試試",startLead:"適合會開終端機的服主或開發者。基本唯讀功能不用 Docker、Java 遊戲伺服器或 AI API Key；需要 Python 3.11+。",
           install1:"① 取得原始碼",install1Note:"從 GitHub 取得開源 Alpha 版。",install2:"② 準備 Python",install2Note:"Windows 可以使用 py -3 代替 python3。",
           install3:"③ 分析錯誤日誌",install3Note:"把 latest.log 改成你自己的日誌路徑，分析不會修改伺服器。",guide:"閱讀中文使用說明 ↗",issues:"回報你遇到的問題 ↗",
-          footerGithub:"GitHub 原始碼",footerSecurity:"安全政策",footerLicense:"Apache-2.0 授權",footerDisclaimer:"非官方 Minecraft 社群工具，與 Mojang Studios、Microsoft 無關。插畫為原創示意，並非遊戲畫面。第三方模組及遊戲資產各自保有其權利。"
+          footerGithub:"GitHub 原始碼",footerDev:"開發者文件",footerSecurity:"安全政策",footerLicense:"Apache-2.0 授權",footerDisclaimer:"非官方 Minecraft 社群工具，與 Mojang Studios、Microsoft 無關。插畫為原創示意，並非遊戲畫面。第三方模組及遊戲資產各自保有其權利。"
         },
         en:{
-          skip:"Skip to main content",navTry:"Try log analyzer",navSkill:"Agent quick start",btnSkill:"Agent Skills / CLI guide →",navPain:"Problems solved",navHow:"How it works",navStatus:"Current status",navStart:"Get started",eyebrow:"OPEN SOURCE · MINECRAFT TROUBLESHOOTING",
+          skip:"Skip to main content",navTry:"Try log analyzer",navPain:"Problems solved",navHow:"How it works",navStatus:"Current status",navStart:"Get started",eyebrow:"OPEN SOURCE · MINECRAFT TROUBLESHOOTING",
           headline1:"Minecraft not working?",headline2:"Find the cause. Fix with evidence.",lead:"TotemOps helps server owners understand crash logs, inspect mod dependencies and review risky updates. Spend less time guessing and more time on what actually matters.",
           btnTry:"Analyze latest.log for free →",btnRepo:"Explore on GitHub ↗",startTry:"Try log analysis in your browser →",btnRelease:"Get Alpha source ↗",alert:"⚠️ Alpha preview: read-only inspection and selected authorized sandbox tests are available. It does NOT guarantee automatic repairs or provide a playable one-click Minecraft game installer.",
           heroCaption:"Original concept illustration, not a captured Minecraft gameplay screenshot",painKicker:"COMMON PROBLEMS",painTitle:"Have you run into these problems?",painLead:"No more guessing which mod broke or whether an update will knock the server offline. Start with the evidence.",
@@ -286,7 +284,7 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
           startKicker:"GET STARTED",startTitle:"Try the simplest workflow",startLead:"For server owners and developers comfortable with a terminal. Local read-only inspection needs no Docker, Java server or AI API key; Python 3.11+ is required.",
           install1:"① Clone the source",install1Note:"Get the open-source Alpha preview from GitHub.",install2:"② Prepare Python",install2Note:"On Windows, use py -3 instead of python3.",
           install3:"③ Diagnose a log",install3Note:"Replace latest.log with your actual path; diagnosis won't modify the server.",guide:"Read the English guide ↗",issues:"Report a problem ↗",
-          footerGithub:"GitHub source",footerSecurity:"Security policy",footerLicense:"Apache-2.0 license",footerDisclaimer:"An unofficial Minecraft community tool, not affiliated with Mojang Studios or Microsoft. Illustrations are original concept art, not game screenshots. All third-party assets retain their respective licenses."
+          footerGithub:"GitHub source",footerDev:"Developer docs",footerSecurity:"Security policy",footerLicense:"Apache-2.0 license",footerDisclaimer:"An unofficial Minecraft community tool, not affiliated with Mojang Studios or Microsoft. Illustrations are original concept art, not game screenshots. All third-party assets retain their respective licenses."
         }
       };
       const buttons=Array.from(document.querySelectorAll("[data-select-language]"));

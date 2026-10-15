@@ -8,14 +8,6 @@
 
 ### Minecraft 出問題，不用再靠猜。先找原因、確認版本，再決定怎麼修。
 
-**AGY 傻瓜安裝（可以完整停用／解除安裝）：** 把這個 [GitHub 倉庫](https://github.com/j0935586110-lgtm/TotemOps) 貼給 AGY 並要求它以原生 Plugin 安裝；最可靠的指令是：
-
-```sh
-agy plugin install https://github.com/j0935586110-lgtm/TotemOps
-```
-
-裝完即可用對話請 AGY 檢查 Minecraft 日誌；要撤銷可執行 `agy plugin uninstall totem-ops`。單純貼網址**不保證**每個 Agent 會自動安裝，也不代表有權修改正式世界。[第一次使用、沙箱修復與可逆說明](docs/AGY_FIRST_RUN.md)。
-
 **給 Minecraft 服主與模組作者的開源小幫手。** 把很長的錯誤日誌、雜亂的模組版本與繁瑣的檢查工作整理成一份看得懂、有根據的報告。
 
 <p align="center">
@@ -30,30 +22,9 @@ agy plugin install https://github.com/j0935586110-lgtm/TotemOps
   <a href="https://github.com/j0935586110-lgtm/TotemOps/releases">版本下載</a>
 </p>
 
-**現有工具優先，不重複造輪子：** 模組版本與依賴優先使用 [Modrinth](https://modrinth.com/)；Minecraft 崩潰問題可參考 [mclo.gs](https://mclo.gs/) 與 [Crash Assistant](https://github.com/KostromDan/Crash-Assistant)。不死圖騰重點是整合分析、保留證據、執行授權後的沙箱驗證，而不是取代這些成熟工具。[整合邊界與隱私說明](docs/EXISTING_TOOL_REUSE.md)。 **上游已有修補就優先借鏡，不再重做：** [NeoForge 真實 Issue #2472 驗證與上游 PR #3331 對照](docs/UPSTREAM_REUSE_TRIAL_2472.md)。
-
 > **目前是 v0.1.0-alpha.1 開發預覽版。** 已可做唯讀分析與部分經授權的沙箱實驗；**不是**一鍵自動修好所有 Minecraft，也**不是**讓玩家雙擊就能遊玩的正式安裝器。
 
 ---
-
-## 開發者一分鐘開始：Skill + CLI（不需 MCP）
-
-**[圖文快速開始（繁中／English）](https://j0935586110-lgtm.github.io/TotemOps/start.html)** · **[Skill 標準工作流程](SKILL.md)** · **[瀏覽器本機分析 latest.log](https://j0935586110-lgtm.github.io/TotemOps/diagnose.html)**
-
-先 Clone 專案並讓 Claude Code 或 AGY 開啟該工作樹；**只把倉庫網址貼到普通聊天視窗，不等於完成安裝或授權執行。**
-
-```sh
-git clone https://github.com/j0935586110-lgtm/TotemOps.git
-cd TotemOps
-./bin/totem-ops manifest ./mods --json --summary
-./bin/totem-ops crash ./latest.log --json
-./bin/totem-ops smoke --help
-```
-
-- Claude Code：`.claude/skills/totem-ops/SKILL.md`；AGY：`.agents/skills/totem-ops/SKILL.md`；根目錄 `SKILL.md` 是共用簡短規則。
-- `manifest --summary` 僅回傳少量 JSON，必要時才讀取完整報告。未知 Client／Server 相容性不自動分類。
-- `smoke` **僅檢查已存在、已授權的隔離 Docker 測試伺服器**，不自動建立／操作正式世界。發布仍需人類審核。
-- **AGY 原生安裝已實測**：`agy plugin install https://github.com/j0935586110-lgtm/TotemOps`；檢查：`agy plugin list --json`；可逆移除：`agy plugin uninstall totem-ops`。以上在全新隔離 HOME 驗證，仍須授權讀取真實檔案與執行工具。
 
 ## 你是不是遇過這些事？
 
@@ -135,8 +106,12 @@ Windows 可把 `python3` 換成 `py -3`。路徑請換成你自己的。若沒�
 
 歡迎透過 [Issues](https://github.com/j0935586110-lgtm/TotemOps/issues) 告訴我們：你遇到什麼故障、目前最花時間的是哪一步。請先移除日誌中的 IP、帳號、Token 與玩家個資。
 
+**需要給 AI 工具使用，或想研究程式碼？** 請看 [開發者快速開始（AGY／Claude Code／OpenCode）](https://j0935586110-lgtm.github.io/TotemOps/start.html)；Skill、JSON、Docker 與安全規則都放在獨立的技術頁面。
+
 <details>
 <summary><strong>開發者資訊、測試與安全聲明</strong></summary>
+
+**現有工具優先，不重複造輪子：** 模組版本與依賴優先使用 [Modrinth](https://modrinth.com/)；Minecraft 崩潰問題可參考 [mclo.gs](https://mclo.gs/) 與 [Crash Assistant](https://github.com/KostromDan/Crash-Assistant)。不死圖騰重點是整合分析、保留證據、執行授權後的沙箱驗證，而不是取代這些成熟工具。[整合邊界與隱私說明](docs/EXISTING_TOOL_REUSE.md)。 **上游已有修補就優先借鏡，不再重做：** [NeoForge 真實 Issue #2472 驗證與上游 PR #3331 對照](docs/UPSTREAM_REUSE_TRIAL_2472.md)。
 
 本專案採用 [Apache-2.0](LICENSE)，詳見 [安全政策](SECURITY.md)、[貢獻指南](CONTRIBUTING.md) 與 [Alpha 功能界線](docs/RELEASE_STATUS.md)。原程式碼不包含 Minecraft 本體、玩家私有模組或帳號資料。
 
