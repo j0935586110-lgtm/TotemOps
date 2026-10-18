@@ -76,6 +76,16 @@
     .evidence-list li{padding:9px 0;border-bottom:1px solid #315157;display:flex;gap:10px;min-width:0;align-items:start}
     .line-number{color:#8bd9d4;font:800 .8rem ui-monospace,monospace;white-space:nowrap}
     .evidence-list code{color:#d6e2dd;font:.76rem/1.5 ui-monospace,Consolas,monospace;overflow-wrap:anywhere;min-width:0}
+    .folder-panel{margin:19px 0;border:1px solid #3b8170;border-radius:12px;padding:17px;background:#0d2c34}
+    .folder-panel h3{margin:0 0 7px;color:#d1ffe2}
+    .folder-panel p{font-size:.88rem;color:#c2d9d3}
+    .folder-panel label,.folder-panel button{display:inline-flex;border:0;border-radius:8px;padding:10px 15px;margin:6px 9px 6px 0;background:#9af4c7;color:#062f2c;font-weight:800;cursor:pointer}
+    .folder-panel input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+    .folder-panel button{background:#fbd89e}
+    .folder-finding{margin:10px 0;padding:12px;border:1px solid #437968;border-radius:8px;background:#102f35;overflow-wrap:anywhere}
+    .folder-finding p{margin:6px 0}
+    .folder-evidence{font-size:.77rem!important;color:#add6cb!important;overflow-wrap:anywhere}
+    .folder-warning{color:#ffe7aa!important}
     .below{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-bottom:55px}
     .info-card{background:#102834;border:1px solid #305364;border-radius:16px;padding:25px}
     .info-card h2{margin:0 0 12px;font-size:1.13rem}
@@ -88,6 +98,7 @@
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:0s!important;transition:none!important;scroll-behavior:auto!important}}
   </style>
   <script src="assets/diagnose.js" defer></script>
+  <script src="assets/folder-diagnose.js" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -128,6 +139,16 @@
               <input type="file" id="log-file" accept=".log,.txt,text/plain" aria-label="讀取本機 Minecraft 錯誤日誌">
             </div>
             <p class="field-note" id="file-feedback" role="status" aria-live="polite"></p>
+            <div class="folder-panel" aria-labelledby="folder-title">
+              <h3 id="folder-title">進階：排查整個 .minecraft 資料夾</h3>
+              <p>資料夾可達 1.5 GB：先建立檔案清單，只抽樣讀取最多 4 份日誌、350 個模組 JAR 的小型描述檔、12 個世界 level.dat。資料留在瀏覽器，設有 180 秒中止保護；不讀 playerdata、帳號檔，也不修改遊戲。</p>
+              <label for="folder-file">選擇 .minecraft 資料夾</label>
+              <input id="folder-file" type="file" webkitdirectory directory multiple aria-label="選擇 Minecraft 客戶端資料夾">
+              <button id="folder-cancel" type="button" hidden>取消掃描</button>
+              <p id="folder-progress" role="status" aria-live="polite">等待選擇資料夾；全程只在此裝置讀取。</p>
+              <div id="folder-result" aria-live="polite"></div>
+            </div>
+
       <label for="log-input" class="sample-label">日誌文字內容</label>
             <textarea id="log-input" spellcheck="false" aria-describedby="input-hint" placeholder="將 Minecraft latest.log 的錯誤內容貼到這裡"></textarea>
             <p class="field-note" id="input-hint">直接貼上或選取檔案後分析；不會要求任何 IP、帳號、Token 或 Minecraft 登入資料。</p>

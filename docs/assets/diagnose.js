@@ -59,6 +59,14 @@
       detail: "確認 Minecraft、Forge／NeoForge／Fabric 的確切版本，並從官方發布頁核對模組支援資訊。",
       patterns: [/incompatible (?:mod|mod set|mods)/i, /mod .+? requires .*?(?:forge|neoforge|fabric)/i, /mod loading has failed/i, /mod resolution encountered an incompatible mod set/i],
       priority: 6
+    },
+    {
+      id: "nbt",
+      name: "世界資料或 NBT 讀取異常",
+      code: "NBT_READ_FAILURE",
+      detail: "日誌顯示 NBT／level.dat 資料可能讀取失敗。請先備份世界，再檢查相應存檔與版本；單靠日誌不能證明世界已損毀。",
+      patterns: [/NBTException/i, /Malformed NBT/i, /ReportedException: Loading NBT data/i, /(?:failed|unable|error) to (?:read|load|parse) .*?(?:level\.dat|NBT)/i, /Invalid tag id .*?NBT/i],
+      priority: 7
     }
   ];
 
