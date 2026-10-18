@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; worker-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
   <meta name="theme-color" content="#081520">
   <meta name="description" content="免費 Minecraft 伺服器日誌初步診斷：在你的瀏覽器本機分析 latest.log、模組依賴、Java、Mixin 與記憶體錯誤。免註冊、不上傳檔案、不使用 AI API。">
   <link rel="canonical" href="https://j0935586110-lgtm.github.io/TotemOps/diagnose.html">
@@ -123,11 +123,12 @@
             </div>
             <div class="drop" id="dropzone">
               <strong>將 latest.log 拖曳到這裡</strong>
-              <p>只在瀏覽器記憶體中讀取，檔案大小上限 2 MiB</p>
+              <p>只在瀏覽器記憶體中讀取，檔案大小上限 64 MiB，分段在本機分析</p>
               <label for="log-file" class="file-label">或選擇本機文字檔</label>
               <input type="file" id="log-file" accept=".log,.txt,text/plain" aria-label="讀取本機 Minecraft 錯誤日誌">
             </div>
-            <label for="log-input" class="sample-label">日誌文字內容</label>
+            <p class="field-note" id="file-feedback" role="status" aria-live="polite"></p>
+      <label for="log-input" class="sample-label">日誌文字內容</label>
             <textarea id="log-input" spellcheck="false" aria-describedby="input-hint" placeholder="將 Minecraft latest.log 的錯誤內容貼到這裡"></textarea>
             <p class="field-note" id="input-hint">直接貼上或選取檔案後分析；不會要求任何 IP、帳號、Token 或 Minecraft 登入資料。</p>
             <div class="actionrow">
