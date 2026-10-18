@@ -61,6 +61,22 @@
       priority: 6
     },
     {
+      id: "config",
+      name: "模組或客戶端設定可能無法載入",
+      code: "CONFIG_PARSE_FAILURE",
+      detail: "日誌指向設定檔讀取或 TOML／JSON 語法問題。請核對錯誤中提及的檔名；僅憑這段日誌不能確認是哪個設定值造成。",
+      patterns: [/Failed to load (?:configuration|config)/i, /Failed to parse .*?(?:\.toml|\.json5?|configuration)/i, /ParsingException.*?(?:toml|config)/i, /Invalid configuration file/i],
+      priority: 7
+    },
+    {
+      id: "region",
+      name: "世界區塊或 Region 檔讀取異常",
+      code: "REGION_READ_FAILURE",
+      detail: "日誌可能涉及區域檔或區塊讀取問題。請備份世界，並與 .mca 索引及有限抽樣檢查交叉確認。",
+      patterns: [/(?:failed|unable|error) to (?:read|load) (?:a )?chunk/i, /corrupt(?:ed)? (?:chunk|region)/i, /RegionFile.*?(?:failed|error|corrupt)/i],
+      priority: 8
+    },
+    {
       id: "nbt",
       name: "世界資料或 NBT 讀取異常",
       code: "NBT_READ_FAILURE",

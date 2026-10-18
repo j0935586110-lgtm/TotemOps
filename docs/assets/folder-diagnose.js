@@ -4,7 +4,10 @@
   const MiB = 1024 * 1024;
   const LIMITS = Object.freeze({
     files: 20000, logs: 4, logBytes: 64 * MiB, totalLogBytes: 192 * MiB,
-    jars: 350, jarBytes: 256 * MiB, nbt: 12, nbtBytes: 8 * MiB,
+    jars: 350, jarBytes: 256 * MiB, nbt: 24, nbtBytes: 8 * MiB,
+    regions: 20, regionBytes: 1024 * MiB, regionSamples: 4,
+    regionCompressedBytes: 256 * 1024, expandedRegionBytes: 2 * MiB,
+    configs: 40, configBytes: 256 * 1024, totalConfigBytes: 2 * MiB,
     zipEntries: 10000, metadataBytes: 64 * 1024, expandedNbtBytes: 8 * MiB,
     durationMs: 180000
   });
@@ -17,6 +20,11 @@
     if (/(?:^|\/)(?:logs|crash-reports)\/[^/]+\.(?:log|txt)$/i.test(path) || /(?:^|\/)latest\.log$/i.test(path)) return "log";
     if (/(?:^|\/)mods\/[^/]+\.jar$/i.test(path)) return "jar";
     if (/(?:^|\/)saves\/[^/]+\/level\.dat(?:_old)?$/i.test(path)) return "nbt";
+    if (/(?:^|\/)saves\/[^/]+\/data\/(?:idcounts|raids|forcedchunks|scoreboard|random_sequences)\.dat$/i.test(path)) return "nbt";
+    if (/(?:^|\/)saves\/[^/]+\/(?:DIM-?\d+\/)?region\/r\.-?\d+\.-?\d+\.mca$/i.test(path) ||
+        /(?:^|\/)saves\/[^/]+\/dimensions\/[^/]+\/[^/]+\/region\/r\.-?\d+\.-?\d+\.mca$/i.test(path)) return "region";
+    if (/(?:^|\/)(?:config|defaultconfigs)\/(?:[^/]+\/){0,2}[^/]+\.(?:json|json5|toml)$/i.test(path) ||
+        /(?:^|\/)saves\/[^/]+\/serverconfig\/(?:[^/]+\/){0,2}[^/]+\.(?:json|json5|toml)$/i.test(path)) return "config";
     return null;
   }
   function logSort(a, b) {
@@ -25,8 +33,9 @@
       (b.file.lastModified || 0) - (a.file.lastModified || 0);
   }
   function planFolder(fileList) {
-    const list = { entries: [], log: [], jar: [], nbt: [], count: 0, bytes: 0,
-      skipped: { unselected: 0, size: 0, budget: 0, safety: 0 }, eligible: { log: 0, jar: 0, nbt: 0 } };
+    const list = { entries: [], log: [], jar: [], nbt: [], region: [], config: [], count: 0, bytes: 0,
+      skipped: { unselected: 0, size: 0, budget: 0, safety: 0 },
+      eligible: { log: 0, jar: 0, nbt: 0, region: 0, config: 0 } };
     const total = Number(fileList && fileList.length) || 0;
     list.count = total;
     if (!total) return list;
@@ -39,7 +48,8 @@
       const kind = classifyPath(path);
       if (!kind) { list.skipped.unselected++; continue; }
       list.eligible[kind]++;
-      const bytesLimit = kind === "log" ? LIMITS.logBytes : kind === "jar" ? LIMITS.jarBytes : LIMITS.nbtBytes;
+      const bytesLimit = kind === "log" ? LIMITS.logBytes : kind === "jar" ? LIMITS.jarBytes :
+        kind === "region" ? LIMITS.regionBytes : kind === "config" ? LIMITS.configBytes : LIMITS.nbtBytes;
       if (file.size > bytesLimit || !file.size) { list.skipped.size++; continue; }
       list[kind].push({ file, path, kind });
     }
@@ -52,15 +62,23 @@
       logBytes += entry.file.size;
       return true;
     });
-    for (const kind of ["jar", "nbt"]) {
+    for (const kind of ["jar", "nbt", "region", "config"]) {
       list[kind].sort((a, b) => a.path.localeCompare(b.path));
-      const limit = LIMITS[kind === "jar" ? "jars" : "nbt"];
+      const limit = LIMITS[kind === "jar" ? "jars" : kind === "region" ? "regions" : kind === "config" ? "configs" : "nbt"];
       if (list[kind].length > limit) {
         list.skipped.budget += list[kind].length - limit;
         list[kind].length = limit;
       }
     }
-    list.entries = [...list.log, ...list.jar, ...list.nbt];
+    let configBytes = 0;
+    list.config = list.config.filter(entry => {
+      if (configBytes + entry.file.size > LIMITS.totalConfigBytes) {
+        list.skipped.budget++; return false;
+      }
+      configBytes += entry.file.size;
+      return true;
+    });
+    list.entries = [...list.log, ...list.jar, ...list.nbt, ...list.config, ...list.region];
     return list;
   }
   const api = { LIMITS, classifyPath, planFolder };
@@ -112,7 +130,9 @@
     if (findings.length > 32) output.appendChild(element("p", "另有 " + (findings.length - 32) + " 項線索未顯示。"));
     const stats = element("p",
       "日誌 " + (sum.logs || 0) + "／模組 JAR " + (sum.jars || 0) +
-      "／世界 NBT " + (sum.nbt || 0) + "；僅使用唯讀取樣。", "folder-evidence");
+      "／世界 NBT " + (sum.nbt || 0) + "／區域檔 " + (sum.regions || 0) +
+      "／設定檔 " + (sum.configs || 0) + "；區域檔成功抽查 " + (sum.regionSamples || 0) +
+      " 個區塊、另有 " + (sum.deferredRegionChunks || 0) + " 個區塊未深入驗證；僅使用唯讀取樣。", "folder-evidence");
     output.appendChild(stats);
   }
   function showFailure(message) {
@@ -132,7 +152,7 @@
     if (!chosen) {
       render({ summary: { count: plan.count, bytes: plan.bytes, processed: 0,
         skipped: plan.count, logs: 0, jars: 0, nbt: 0 },
-        warning: "沒有找到支援的 logs、crash-reports、mods/*.jar 或 saves/*/level.dat。請選取 .minecraft 根資料夾。" });
+        warning: "沒有找到支援的日誌、模組、世界 NBT、區域檔或設定檔。請選取 .minecraft 根資料夾。" });
       progress.textContent = "清單建立完成，未讀取任何檔案內容。";
       return;
     }
@@ -167,7 +187,7 @@
       instance.postMessage({ type: "analyze", entries: plan.entries,
         summary: { count: plan.count, bytes: plan.bytes,
           skipped: Object.values(plan.skipped).reduce((a, b) => a + b, 0),
-          eligible: plan.eligible } });
+          skippedDetail: plan.skipped, eligible: plan.eligible } });
     } catch (_) { stop(); showFailure("無法建立背景工作執行緒。"); }
   });
   cancel.addEventListener("click", () => {
