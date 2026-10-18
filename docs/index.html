@@ -91,8 +91,28 @@
     .footerlinks a{color:#b7d9de}
     @media(max-width:900px){.pain-grid{grid-template-columns:repeat(2,1fr)}.feature-layout{grid-template-columns:1fr}.nav{gap:12px}.nav a{display:none}.steps{grid-template-columns:1fr}.intro{padding-top:55px}}
     @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-inside{min-height:65px}.brand{font-size:1rem}.brand-mark{width:33px;height:33px}.language button{padding:7px 9px}.intro{padding-top:44px}.pain-grid,.status-grid{grid-template-columns:1fr}.tile{min-height:0}.actions{flex-direction:column}.btn{width:100%}.feature-panel{padding:19px}section.main-section{padding:36px 0}.alert{font-size:.9rem}}
+    .quick-upload{max-width:900px;border:1px solid #397866;border-radius:18px;padding:22px;margin:20px 0 28px;background:linear-gradient(140deg,#143c35,#0d2938)}
+    .quick-drop{border:2px dashed #65c79d;border-radius:12px;padding:20px;text-align:center;background:#0b2b2b}
+    .quick-drop.hovering{background:#1e5745;border-color:#b7ffc8}
+    .quick-drop strong{display:block;font-size:1.15rem;color:#d7ffdf}
+    .quick-drop p{margin:6px 0 12px;color:#a9d6c5;font-size:.9rem}
+    .quick-drop label{display:inline-flex;background:#7bffc3;color:#07282b;border-radius:9px;padding:9px 20px;font-weight:850;cursor:pointer}
+    .quick-upload input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+    .quick-feedback{min-height:22px;color:#c5e6d6;font-size:.88rem;overflow-wrap:anywhere;margin:10px 0}
+    .quick-status{display:inline-block;background:#265445;color:#b5ffcc;border-radius:30px;padding:4px 11px;font-size:.83rem;font-weight:800}
+    .quick-result{margin-top:12px}
+    .quick-result .result-info{color:#c6ead6}
+    .quick-result .result-error{color:#ffc6a6}
+    .quick-result .result-meta{color:#a8c6c8;font-size:.82rem}
+    .quick-result .finding{padding:13px;margin:12px 0;border:1px solid #3c6d66;border-radius:10px;background:#123d3b}
+    .quick-result .finding-head{display:flex;gap:8px;justify-content:space-between}
+    .quick-result .finding-detail{color:#d2e1df}
+    .quick-result .finding-code,.quick-result .line-number{color:#8feec5;font-size:.8rem}
+    .quick-result .evidence-list{overflow-wrap:anywhere;font-size:.8rem;padding-left:22px}
+    .quick-result summary{color:#aeffda;cursor:pointer}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn:hover{transform:none}}
   </style>
+  <script src="assets/diagnose.js" defer></script>
 </head>
 <body>
   <a href="#main" class="skip" data-i18n="skip">跳到主要內容</a>
@@ -121,6 +141,23 @@
         <a class="btn primary" href="diagnose.html" data-i18n="btnTry">免費分析 latest.log →</a>
         <a class="btn" href="https://github.com/j0935586110-lgtm/TotemOps" data-i18n="btnRepo">查看開源專案 ↗</a>
       </div>
+      <section class="quick-upload" aria-label="本機日誌分析">
+        <div class="quick-drop" id="dropzone">
+          <strong data-i18n="uploadTitle">把 latest.log 直接拖到這裡</strong>
+          <p data-i18n="uploadHint">最大 64 MiB，瀏覽器本機分析，不上傳、不需登入</p>
+          <label for="log-file" data-i18n="uploadChoose">選擇日誌檔案</label>
+          <input type="file" id="log-file" accept=".log,.txt,text/plain" aria-label="選擇 Minecraft 文字日誌">
+        </div>
+        <p class="quick-feedback" id="file-feedback" role="status" aria-live="polite" data-i18n="uploadNote">僅支援 .log／.txt；ZIP、JAR 整合包請使用 CLI</p>
+        <span id="status" class="quick-status" data-i18n="uploadStatus">等待檔案</span>
+        <div id="result" class="quick-result" aria-live="polite"></div>
+        <div hidden>
+          <textarea id="log-input"></textarea>
+          <button type="button" id="analyze-button"></button>
+          <button type="button" id="clear-button"></button>
+          <span id="totem-face"></span>
+        </div>
+      </section>
       <div class="alert" data-i18n="alert">⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。</div>
       <img class="hero-img" src="assets/totemops-hero.svg" width="1200" height="560" alt="Illustration: a Minecraft-style server's error log becomes a clear evidence-backed repair suggestion; not a real gameplay screenshot." decoding="async">
       <p class="figure-label" data-i18n="heroCaption">原創示意插畫，非 Minecraft 遊戲截圖</p>
@@ -231,6 +268,7 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
         zh:{
           skip:"跳到主要內容",navTry:"免費分析日誌",navPain:"解決什麼",navHow:"怎麼運作",navStatus:"做到哪裡",navStart:"開始使用",eyebrow:"開源工具 · Minecraft 故障診斷",
           headline1:"Minecraft 出問題？",headline2:"先找原因，再安全處理。",lead:"不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。",
+          uploadTitle:"把 latest.log 直接拖到這裡",uploadHint:"最大 64 MiB，瀏覽器本機分析，不上傳、不需登入",uploadChoose:"選擇日誌檔案",uploadNote:"僅支援 .log／.txt；ZIP、JAR 整合包請使用 CLI",uploadStatus:"等待檔案",
           btnTry:"免費分析 latest.log →",btnRepo:"查看開源專案 ↗",startTry:"免安裝，立即體驗日誌診斷 →",btnRelease:"下載 Alpha 原始碼 ↗",alert:"⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。",
           heroCaption:"原創示意插畫，非 Minecraft 遊戲截圖",painKicker:"使用者痛點",painTitle:"你是不是也遇過這些麻煩？",painLead:"不想再一個個猜是什麼模組壞了、更新會不會讓整台伺服器不能玩？先從最常見的問題開始。",
           p1Title:"伺服器突然開不了",p1Body:"很長的錯誤日誌不知道看哪裡？幫你挑出關鍵錯誤，給出下一步檢查方向。",
@@ -260,6 +298,7 @@ python3 -m pip install -r requirements.txt</code><p data-i18n="install2Note">Win
         en:{
           skip:"Skip to main content",navTry:"Try log analyzer",navPain:"Problems solved",navHow:"How it works",navStatus:"Current status",navStart:"Get started",eyebrow:"OPEN SOURCE · MINECRAFT TROUBLESHOOTING",
           headline1:"Minecraft not working?",headline2:"Find the cause. Fix with evidence.",lead:"TotemOps helps server owners understand crash logs, inspect mod dependencies and review risky updates. Spend less time guessing and more time on what actually matters.",
+          uploadTitle:"Drop latest.log here",uploadHint:"Up to 64 MiB, analyzed in your browser; no upload or login",uploadChoose:"Choose log file",uploadNote:"Only .log/.txt supported; use the CLI for ZIP/JAR packages",uploadStatus:"Waiting for a file",
           btnTry:"Analyze latest.log for free →",btnRepo:"Explore on GitHub ↗",startTry:"Try log analysis in your browser →",btnRelease:"Get Alpha source ↗",alert:"⚠️ Alpha preview: read-only inspection and selected authorized sandbox tests are available. It does NOT guarantee automatic repairs or provide a playable one-click Minecraft game installer.",
           heroCaption:"Original concept illustration, not a captured Minecraft gameplay screenshot",painKicker:"COMMON PROBLEMS",painTitle:"Have you run into these problems?",painLead:"No more guessing which mod broke or whether an update will knock the server offline. Start with the evidence.",
           p1Title:"Server won't start",p1Body:"Logs are huge and cryptic. Pull out key errors and find what to investigate next.",

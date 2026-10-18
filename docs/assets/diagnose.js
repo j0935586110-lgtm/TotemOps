@@ -1,8 +1,8 @@
 /* TotemOps browser-only log triage. No network, uploads, analytics, storage or AI. */
 (function (root) {
   "use strict";
-  const LIMIT_BYTES = 2 * 1024 * 1024;
-  const LIMIT_LINES = 30000;
+  const LIMIT_BYTES = 64 * 1024 * 1024;
+  const CHUNK_BYTES = 512 * 1024;
   const RULES = [
     {
       id: "dependency",
@@ -62,37 +62,102 @@
     }
   ];
 
-  function analyzeLog(input) {
-    if (typeof input !== "string") return { status: "invalid", error: "需要文字格式的日誌。" };
-    if (new TextEncoder().encode(input).length > LIMIT_BYTES) return { status: "too_large", error: "日誌超過 2 MiB，請先截取錯誤附近的片段再分析。" };
-    if (!input.trim()) return { status: "empty", error: "請貼上或選擇一份 Minecraft 錯誤日誌。" };
-    const lines = input.replace(/\r\n?/g, "\n").split("\n");
-    if (lines.length > LIMIT_LINES) return { status: "too_many_lines", error: "超過 30,000 行，請先截取錯誤附近片段。" };
-    const findings = [];
-    for (const rule of RULES) {
-      const evidence = [];
-      let matches = 0;
-      for (let i = 0; i < lines.length; i++) {
-        if (rule.patterns.some((regex) => regex.test(lines[i]))) {
-          matches++;
-          if (evidence.length < 3) evidence.push({ line: i + 1, text: lines[i].slice(0, 360) });
+  function createAnalyzer() {
+    const matches = RULES.map((rule) => ({ rule, count: 0, evidence: [] }));
+    let pending = "";
+    let pendingCR = false;
+    let lineCount = 0;
+    let hasText = false;
+
+    function scanLine(line) {
+      lineCount++;
+      if (!hasText && line.trim()) hasText = true;
+      for (const entry of matches) {
+        if (!entry.rule.patterns.some((regex) => regex.test(line))) continue;
+        entry.count++;
+        if (entry.evidence.length < 3) {
+          entry.evidence.push({ line: lineCount, text: line.slice(0, 360) });
         }
       }
-      if (matches) findings.push({
-        id: rule.id, code: rule.code, name: rule.name, detail: rule.detail,
-        matches, evidence, certainty: "heuristic", priority: rule.priority
-      });
     }
-    findings.sort((a, b) => a.priority - b.priority);
+
     return {
-      status: findings.length ? "indicators_found" : "no_known_indicators",
-      findings,
-      lineCount: lines.length,
-      limited: false,
-      message: findings.length
-        ? "找到可能的故障線索；不是已驗證的根因，也沒有修改任何伺服器檔案。"
-        : "未命中目前已知規則；這不代表日誌正常或伺服器沒有問題。"
+      pushChunk(input) {
+        if (typeof input !== "string") throw new TypeError("Expected a text chunk");
+        let chunk = (pendingCR ? "\r" : "") + input;
+        pendingCR = false;
+        if (chunk.endsWith("\r")) {
+          pendingCR = true;
+          chunk = chunk.slice(0, -1);
+        }
+        const parts = chunk.replace(/\r\n?/g, "\n").split("\n");
+        for (let i = 0; i < parts.length - 1; i++) {
+          scanLine(pending + parts[i]);
+          pending = "";
+        }
+        pending += parts[parts.length - 1];
+      },
+      finish() {
+        if (pendingCR) {
+          scanLine(pending);
+          pending = "";
+          pendingCR = false;
+        }
+        scanLine(pending);
+        if (!hasText) return { status: "empty", error: "請貼上或選擇一份 Minecraft 錯誤日誌。" };
+        const findings = matches.filter((entry) => entry.count).map((entry) => ({
+          id: entry.rule.id,
+          code: entry.rule.code,
+          name: entry.rule.name,
+          detail: entry.rule.detail,
+          matches: entry.count,
+          evidence: entry.evidence,
+          certainty: "heuristic",
+          priority: entry.rule.priority
+        }));
+        findings.sort((a, b) => a.priority - b.priority);
+        return {
+          status: findings.length ? "indicators_found" : "no_known_indicators",
+          findings,
+          lineCount,
+          limited: false,
+          message: findings.length
+            ? "找到可能的故障線索；不是已驗證的根因，也沒有修改任何伺服器檔案。"
+            : "未命中目前已知規則；這不代表日誌正常或伺服器沒有問題。"
+        };
+      }
     };
+  }
+
+  function tooLarge() {
+    return { status: "too_large", error: "日誌超過 64 MiB，請改用本機 CLI 分析。" };
+  }
+
+  function analyzeLog(input) {
+    if (typeof input !== "string") return { status: "invalid", error: "需要文字格式的日誌。" };
+    if (new TextEncoder().encode(input).length > LIMIT_BYTES) return tooLarge();
+    const analyzer = createAnalyzer();
+    analyzer.pushChunk(input);
+    return analyzer.finish();
+  }
+
+  async function analyzeFile(file, onProgress, chunkBytes = CHUNK_BYTES) {
+    if (!file || !Number.isSafeInteger(file.size) || typeof file.slice !== "function") {
+      return { status: "invalid", error: "無法讀取選取的日誌檔案。" };
+    }
+    if (file.size > LIMIT_BYTES) return tooLarge();
+    const size = Number.isSafeInteger(chunkBytes) && chunkBytes > 0
+      ? Math.min(chunkBytes, CHUNK_BYTES) : CHUNK_BYTES;
+    const decoder = new TextDecoder("utf-8");
+    const analyzer = createAnalyzer();
+    for (let offset = 0; offset < file.size; offset += size) {
+      const end = Math.min(offset + size, file.size);
+      const bytes = await file.slice(offset, end).arrayBuffer();
+      analyzer.pushChunk(decoder.decode(bytes, { stream: true }));
+      if (typeof onProgress === "function") onProgress(end, file.size);
+    }
+    analyzer.pushChunk(decoder.decode());
+    return analyzer.finish();
   }
 
   const samples = {
@@ -131,9 +196,9 @@
     }
   };
 
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = { analyzeLog, LIMIT_BYTES, LIMIT_LINES, samples };
-  }
+  const api = { analyzeLog, analyzeFile, createAnalyzer, LIMIT_BYTES, CHUNK_BYTES, samples };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.TotemDiagnose = api;
   if (typeof document === "undefined") return;
 
   const el = (id) => document.getElementById(id);
@@ -142,9 +207,25 @@
   const drop = el("dropzone");
   const file = el("log-file");
   const status = el("status");
+  const feedback = el("file-feedback");
   const character = el("totem-face");
   let activeSample = "missing";
+  let activeWorker = null;
+  let runId = 0;
+  function stopAnalysis() {
+    runId++;
+    if (activeWorker) activeWorker.terminate();
+    activeWorker = null;
+  }
 
+  function showFeedback(message) {
+    if (feedback) feedback.textContent = message;
+  }
+  function showResultOnSmallScreen() {
+    if (root.innerWidth <= 850 && typeof result.scrollIntoView === "function") {
+      result.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
   function clearChildren(target) { while (target.firstChild) target.removeChild(target.firstChild); }
   function node(tag, text, className) {
     const element = document.createElement(tag);
@@ -190,6 +271,8 @@
   function setSample(key) {
     const sample = samples[key];
     if (!sample) return;
+    stopAnalysis();
+    showFeedback("");
     activeSample = key;
     input.value = sample.log;
     document.querySelectorAll("[data-sample]").forEach((btn) => {
@@ -201,8 +284,14 @@
   document.querySelectorAll("[data-sample]").forEach((btn) => btn.addEventListener("click", () => {
     setSample(btn.getAttribute("data-sample"));
   }));
-  el("analyze-button").addEventListener("click", () => render(analyzeLog(input.value)));
+  el("analyze-button").addEventListener("click", () => {
+    stopAnalysis();
+    render(analyzeLog(input.value));
+    showResultOnSmallScreen();
+  });
   el("clear-button").addEventListener("click", () => {
+    stopAnalysis();
+    showFeedback("");
     activeSample = "";
     input.value = "";
     document.querySelectorAll("[data-sample]").forEach((b) => b.setAttribute("aria-pressed", "false"));
@@ -214,21 +303,89 @@
   });
   async function readFile(selected) {
     if (!selected) return;
+    stopAnalysis();
+    const currentRun = runId;
+    const fileName = String(selected.name || "未命名檔案").slice(0, 120);
+    if (!/\.(log|txt)$/i.test(fileName) && selected.type !== "text/plain") {
+      const error = "目前只支援 .log 或 .txt 文字日誌；模組 ZIP/JAR 請使用 TotemOps CLI 檢查。";
+      showFeedback(fileName + "：" + error);
+      render({ error });
+      showResultOnSmallScreen();
+      return;
+    }
     if (selected.size > LIMIT_BYTES) {
-      render({ error: "檔案超過 2 MiB，請先截取錯誤附近片段。" });
+      showFeedback(fileName + " 超過 64 MiB，未開始分析。");
+      render(tooLarge());
+      showResultOnSmallScreen();
+      return;
+    }
+    showFeedback("已選擇：" + fileName + "（" + (selected.size / 1048576).toFixed(1) + " MiB），正在本機分析…");
+    input.value = "";
+    activeSample = "";
+    document.querySelectorAll("[data-sample]").forEach((b) => b.setAttribute("aria-pressed", "false"));
+    clearChildren(result);
+    result.appendChild(node("p", "正在本機分析日誌，檔案不會上傳。", "result-info"));
+    status.textContent = "分析中 0%";
+
+    function progress(done, total) {
+      if (currentRun !== runId) return;
+      status.textContent = "分析中 " + Math.round(done * 100 / Math.max(total, 1)) + "%";
+    }
+    async function fallback() {
+      try {
+        const out = await analyzeFile(selected, progress);
+        if (currentRun === runId) {
+          render(out);
+          showFeedback("分析完成：" + fileName + "；檔案沒有上傳。");
+          showResultOnSmallScreen();
+        }
+      } catch (error) {
+        if (currentRun === runId) {
+          render({ error: "本機分析失敗，請使用較新的瀏覽器或本機 CLI。" });
+          showFeedback(fileName + " 分析失敗，請再試一次。");
+          showResultOnSmallScreen();
+        }
+      }
+    }
+    if (typeof Worker === "undefined") {
+      await fallback();
       return;
     }
     try {
-      const text = await selected.text();
-      input.value = text;
-      activeSample = "";
-      document.querySelectorAll("[data-sample]").forEach((b) => b.setAttribute("aria-pressed", "false"));
-      render(analyzeLog(text));
+      const instance = new Worker("assets/diagnose-worker.js");
+      activeWorker = instance;
+      instance.onmessage = (event) => {
+        if (currentRun !== runId) return;
+        const data = event.data || {};
+        if (data.type === "progress") progress(data.done, data.total);
+        if (data.type === "result" || data.type === "error") {
+          activeWorker = null;
+          instance.terminate();
+          render(data.type === "result" ? data.result : { error: "本機分析失敗，請再試一次。" });
+          showFeedback(data.type === "result"
+            ? "分析完成：" + fileName + "；檔案沒有上傳。"
+            : fileName + " 分析失敗，請再試一次。");
+          showResultOnSmallScreen();
+        }
+      };
+      instance.onerror = () => {
+        if (currentRun !== runId) return;
+        activeWorker = null;
+        instance.terminate();
+        fallback();
+      };
+      instance.postMessage({ file: selected });
     } catch (error) {
-      render({ error: "無法在瀏覽器讀取檔案，請改用貼上文字。" });
+      if (activeWorker) activeWorker.terminate();
+      activeWorker = null;
+      await fallback();
     }
   }
-  file.addEventListener("change", () => readFile(file.files && file.files[0]));
+  file.addEventListener("change", () => {
+    const selected = file.files && file.files[0];
+    file.value = "";
+    readFile(selected);
+  });
   ["dragenter", "dragover"].forEach((eventName) => drop.addEventListener(eventName, (event) => {
     event.preventDefault();
     drop.classList.add("hovering");
@@ -239,7 +396,24 @@
   }));
   drop.addEventListener("drop", (event) => {
     const selected = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+    event.stopPropagation();
     readFile(selected);
   });
-  setSample(activeSample);
+  document.addEventListener("dragover", (event) => {
+    if (event.dataTransfer && Array.from(event.dataTransfer.types || []).includes("Files")) {
+      event.preventDefault();
+    }
+  });
+  document.addEventListener("drop", (event) => {
+    const selected = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+    if (!selected) return;
+    event.preventDefault();
+    readFile(selected);
+    if (drop.scrollIntoView) drop.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  if (document.querySelector("[data-sample]")) setSample(activeSample);
+  else {
+    clearChildren(result);
+    result.appendChild(node("p", "選擇或拖入 latest.log，診斷結果會顯示在這裡。", "result-info"));
+  }
 })(typeof globalThis === "object" ? globalThis : this);
