@@ -113,6 +113,13 @@ python3 tools/totem_operator.py fixplan /你的伺服器/logs/latest.log --json
 - **安全邊界**：只讀日誌、不上傳、不改檔案、不自動修復；exit code `3` 代表「只有計畫，未執行任何變更」（`0` 不使用）。
 - **最小揭露**：輸出僅含 `log_sha256` 與行號，不含日誌原文或絕對路徑；每份配方第一步皆為唯讀確認，會改檔案的步驟標註 `[需確認]`。
 
+## 離線依賴閉包與整合包匯出（closure & packindex）
+
+- **依賴閉包檢查**：不啟動遊戲、離線計算模組缺少的必要前置與版本衝突：
+  `python3 tools/totem_operator.py closure /你的伺服器/mods/`
+- **匯出 Modrinth 索引**：將本機模組轉為可分享的 pack index（有明確下載對照才寫出 `.mrpack`）：
+  `python3 tools/totem_operator.py packindex /你的伺服器/mods/ --name "MyPack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge`
+
 **想看所有進階功能？** 參考 [完整中文手冊](docs/ADVANCED_GUIDE.zh-TW.md)，包含插件開關、相依查詢、沙箱測試、玩家更新包檢查與安全限制。
 
 ## 下一步要做什麼？

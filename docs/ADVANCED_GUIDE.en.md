@@ -231,6 +231,104 @@ python3 tools/totem_operator.py plugins run example-info echo --input '{"message
 
 Agent auto-discovery depends on its version and configuration. If the skill isn't visible, explicitly ask: “Read AGENTS.md (or CLAUDE.md) and .agents/skills/totem-ops/SKILL.md, then run the CLI help command.” This is **one source of truth**, not seven forks.
 
+## Offline dependency closure: know what's missing before booting
+
+The most common reason a Minecraft modpack fails to boot is a missing prerequisite mod (dependency). The `closure` command inspects declared metadata inside local JAR files without launching Minecraft or accessing the network, determining exactly which dependencies are missing and which versions clash.
+
+```bash
+python3 tools/totem_operator.py closure mods/
+python3 tools/totem_operator.py closure mods/ --side server
+python3 tools/totem_operator.py closure mods/ --json
+```
+
+### Exit code status table
+
+| Exit Code | Status | Meaning |
+| --- | --- | --- |
+| `0` | `PASS` | Indicates only that **declared metadata among local files is mutually consistent** (all required dependencies are satisfied by supplied mods) |
+| `3` | `REVIEW_REQUIRED` | Missing required dependencies, version mismatches, declared incompatibilities, or unresolvable version syntax; **no changes executed** |
+| `2` | `BLOCK` | Path not found, symlink detected, no supported mod packages found, or damaged package format |
+
+### Key JSON output fields
+
+- `status`: Overall evaluation status (`PASS`, `REVIEW_REQUIRED`, `BLOCK`).
+- `supplied`: List of supplied mods, including total count `count` and mod details (`file`, `id`, `version`).
+- `missing`: Missing required dependencies, listing target `to`, required by `required_by`, execution side `side`, and declared version ranges `version_ranges`.
+- `version_mismatch`: Version mismatch entries, recording supplied version `supplied_version`, required version range `version_range`, and demanding mod `required_by`.
+- `incompatible_pairs`: Mutually incompatible mod pairs declared by metadata (`from`, `to`, `version_range`).
+- `unresolved_ranges`: Version range expressions that cannot be evaluated deterministically, with `reason` and `note` for human review.
+- `not_verified`: Explicit list of unverified checks for this tool (`remote_availability`, `runtime_resolution`, `maven_full_semantics`, `actual_server_boot`).
+
+### Supported version range syntax
+
+`closure` enforces strict fail-closed parsing, evaluating only the following standard syntax forms:
+- Exact version: e.g. `21.1.0`
+- Comparison operators: `>=`, `>`, `<=`, `<`, `==`, `=` (supports comma-separated combinations such as `>=1.20, <1.21`)
+- Maven interval brackets: e.g. `[1.20,1.21)`, `[1.20]`, `(1.20,)`, `(,2.0]`
+- Trailing wildcard: e.g. `1.20.x` or `1.20.*`
+- Unbounded wildcard: `*` or empty string
+
+**All other syntax forms (including modifier prefixes, non-numeric prerelease tags such as `-beta`, and unsupported operators) are routed to `unresolved_ranges` and marked `REVIEW_REQUIRED` — they are never assumed to be satisfied.**
+
+### Capability boundaries and privacy
+
+- **Capability boundaries (must read; no overclaiming)**:
+  1. Never queries remote repositories for mod availability (`remote_availability`).
+  2. Does not perform runtime dependency resolution or Java class loading (`runtime_resolution`).
+  3. Does not simulate full Maven dependency resolution semantics (`maven_full_semantics`).
+  4. Does not guarantee the server can successfully boot (`actual_server_boot`).
+  5. **`PASS` only indicates local declared metadata self-consistency; `PASS` does not mean "ready to run server".**
+- **Privacy safety**: Output reports contain only relative filenames (`file`), never local filesystem directories or absolute paths; failure reasons also strip path fragments to prevent leaking server directory layout.
+
+## Exporting .mrpack: turn local mods into a shareable pack index
+
+Converts a curated mods folder into Modrinth-standard `modrinth.index.json` metadata; writes a `.mrpack` archive only when every JAR has an explicit, verified HTTPS download source.
+
+> Everyday metaphor: This step is like **"preparing a verified purchase order and fingerprinting each item", not "buying and hauling the goods home"**.
+
+```bash
+python3 tools/totem_operator.py packindex mods/ --name "MyModpack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge
+python3 tools/totem_operator.py packindex mods/ --name "MyModpack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge --downloads-map downloads.json --out dist/MyModpack-1.0.0.mrpack
+python3 tools/totem_operator.py packindex mods/ --name "MyModpack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge --json
+```
+
+### Downloads map (--downloads-map) JSON example
+
+Maps local filenames to metadata objects containing safe download `url` entries:
+
+```json
+{
+  "jei-1.21.1-neoforge-19.21.0.247.jar": {
+    "url": "https://cdn.modrinth.com/data/u6dsqoa3/versions/AbCdEfGh/jei-1.21.1-neoforge-19.21.0.247.jar",
+    "project_id": "u6dsqoa3",
+    "version_id": "AbCdEfGh"
+  }
+}
+```
+
+### Three outcomes and exit codes
+
+- `PLAN_ONLY` (exit `3`): Triggered when `--out` is not specified. Outputs the `modrinth.index.json` specification draft and unresolved file list (`unresolved`), **writing no files to disk**.
+- Successful export (exit `0`): Specified `--out` and every JAR in the folder is resolved in `--downloads-map`. Uses atomic writing (temp file in same directory, ZIP packaging, read-back verification of `sha512` and file size, target existence check, atomic replacement via `os.replace`, and final archive read-back) to guarantee archive integrity.
+- `BLOCK` (exit `2`): Specified `--out` with unresolved download sources (`downloads_unresolved`, refuses incomplete archive creation); target file exists (`output_exists`, refuses overwrite); target in forbidden system paths (`output_path_rejected`); symlink detected (`symlink_not_allowed`); or download URL fails the safety gate.
+
+### Download URL safety gate
+
+Every `url` in `--downloads-map` is validated by a strict fail-closed safety gate:
+- Accepts only `https://` protocol; rejects `http://` and `file://`;
+- Rejects credentials `@` inside URLs;
+- Rejects whitespace and non-printable control characters;
+- Rejects `localhost` and `*.localhost` hostnames;
+- Rejects pure IP addresses (such as `1.2.3.4`);
+- Rejects private network CIDR ranges (`127.0.0.0/8`, `10.0.0.0/8`, `192.168.0.0/16`, `172.16.0.0/12`).
+
+### Capability boundaries
+
+1. Does not download any files (strictly local offline checksum and index generation).
+2. Does not query Modrinth API or perform remote hash lookups (`remote_modrinth_hash_lookup`).
+3. Does not package `overrides/` (does not bundle config files, world data, or player files).
+4. Does not verify whether remote URLs actually exist or are reachable on the internet (`actual_launcher_install`).
+
 ## Extensions (bring your own tools)
 
 Put each trusted opt-in plugin in `plugins/<name>/` with `plugin.json` and a script. A simple example is `plugins/example-info`:

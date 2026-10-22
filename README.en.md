@@ -112,6 +112,13 @@ python3 tools/totem_operator.py fixplan /your-server/logs/latest.log --json
 - **Safety boundary**: Read-only log inspection, no uploads, no file modifications, no auto-repair; exit code `3` means "plan only, no action taken" (`0` is unused).
 - **Minimal exposure**: Outputs only `log_sha256` and line references without raw log text or absolute paths; every recipe begins with a read-only check, and modifying steps are marked `[Needs confirmation]`.
 
+## Offline dependency closure & pack index export (closure & packindex)
+
+- **Dependency closure check**: Offline analysis of missing mod dependencies without launching Minecraft:
+  `python3 tools/totem_operator.py closure /your-server/mods/`
+- **Export Modrinth pack index**: Turn local mods into a shareable pack index (writes `.mrpack` only with verified download sources):
+  `python3 tools/totem_operator.py packindex /your-server/mods/ --name "MyPack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge`
+
 For more commands and examples, see the [full English technical guide](docs/ADVANCED_GUIDE.en.md).
 
 ## What's next?

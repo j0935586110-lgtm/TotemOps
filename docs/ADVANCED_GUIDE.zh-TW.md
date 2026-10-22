@@ -276,6 +276,104 @@ python3 tools/totem_operator.py plugins run example-info echo --input '{"message
 
 **不是所有工具都保證自動啟用。** 如果 AI 沒發現 Skill，直接告訴它：「先讀 `AGENTS.md`（Claude 請先讀 `CLAUDE.md`），再讀 `.agents/skills/totem-ops/SKILL.md`」。CLI 是獨立 Python 工具，不需要任何 AI 帳號才能使用。
 
+## 依賴閉包：先知道缺什麼，再開服
+
+整合包開不起來最常見的原因是「少了一個前置模組（Dependency）」。`closure` 指令在完全不啟動 Minecraft、不連網的前提下，直接剖析本機 JAR 檔案內宣告的 metadata，精確計算整包模組還缺誰、誰的版本不相容。
+
+```bash
+python3 tools/totem_operator.py closure mods/
+python3 tools/totem_operator.py closure mods/ --side server
+python3 tools/totem_operator.py closure mods/ --json
+```
+
+### Exit code 狀態表
+
+| Exit Code | 狀態 | 意義 |
+| --- | --- | --- |
+| `0` | `PASS` | 僅代表**本機檔案的宣告 metadata 互相自洽**（所有宣告的必要依賴皆在本地模組集中找到相符版本） |
+| `3` | `REVIEW_REQUIRED` | 發現缺少必要依賴、版本不相容、宣告衝突或存在無法精確評估之版本語法；**未執行任何修改** |
+| `2` | `BLOCK` | 路徑不存在、檔案為符號連結、無支援的模組檔案或套件格式損壞 |
+
+### JSON 輸出重點欄位
+
+- `status`：整體判定狀態（`PASS`、`REVIEW_REQUIRED`、`BLOCK`）。
+- `supplied`：已提供模組清單，含模組數量 `count` 與詳細列表（`file`、`id`、`version`）。
+- `missing`：缺少的必要依賴，列出目標 `to`、被誰要求 `required_by`、要求端 `side` 與要求的版本範圍 `version_ranges`。
+- `version_mismatch`：版本不相容項目，記錄供給版本 `supplied_version`、要求的版本範圍 `version_range` 與要求者 `required_by`。
+- `incompatible_pairs`：宣告互斥的不相容模組組合（`from`、`to`、`version_range`）。
+- `unresolved_ranges`：無法精確判定之版本範圍語法項目，列出 `reason` 與 `note` 供人工排查。
+- `not_verified`：明確標註本工具未驗證的項目清單（`remote_availability`、`runtime_resolution`、`maven_full_semantics`、`actual_server_boot`）。
+
+### 版本範圍支援規則
+
+`closure` 採用嚴格白名單判定（Fail-closed），僅支援以下版本語法：
+- 精確版本：如 `21.1.0`
+- 比較運算子：`>=`、`>`、`<=`、`<`、`==`、`=`（支援以逗號分隔的多條件組合，如 `>=1.20, <1.21`）
+- Maven 區間標記：如 `[1.20,1.21)`、`[1.20]`、`(1.20,)`、`(,2.0]`
+- 尾端萬用字元：如 `1.20.x` 或 `1.20.*`
+- 無界萬用字元：`*` 或空白字串
+
+**其餘任何語法（包含前綴修飾符、含有非數字後綴的版本標籤如 `-beta`、未知符號），一律進 `unresolved_ranges` 並標記為 `REVIEW_REQUIRED`，絕不會被當成滿足。**
+
+### 能力邊界與隱私保護
+
+- **能力邊界（必讀，不可美化）**：
+  1. 不查遠端儲存庫有沒有這個 mod（`remote_availability`）。
+  2. 不做執行期依賴解析或 Java 類別載入（`runtime_resolution`）。
+  3. 不模擬 Maven 完整複雜解析語意（`maven_full_semantics`）。
+  4. 不保證伺服器能順利開起來（`actual_server_boot`）。
+  5. **`PASS` 僅代表本機宣告自洽，不等於「可以開服」。**
+- **隱私安全**：輸出報告僅包含檔案名稱（`file`），絕對不輸出本機目錄或伺服器絕對路徑；阻擋原因亦會清除路徑字串，避免伺服器目錄結構外洩。
+
+## 匯出 .mrpack：把本機 mods 變成可分享的 pack index
+
+把整理好的 mods 資料夾轉成 Modrinth 規範的 `modrinth.index.json`；只有在每個 JAR 都有明確 HTTPS 下載來源時，才會安全寫出 `.mrpack` 封裝檔。
+
+> 一句白話比喻：這一步就像**「幫你寫好採購單並核對指紋」，不是「幫你把貨買回來」**。
+
+```bash
+python3 tools/totem_operator.py packindex mods/ --name "MyModpack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge
+python3 tools/totem_operator.py packindex mods/ --name "MyModpack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge --downloads-map downloads.json --out dist/MyModpack-1.0.0.mrpack
+python3 tools/totem_operator.py packindex mods/ --name "MyModpack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge --json
+```
+
+### 下載對照表（--downloads-map）JSON 範例
+
+以本機檔案名稱為 key，對應包含安全 `url` 的資訊物件：
+
+```json
+{
+  "jei-1.21.1-neoforge-19.21.0.247.jar": {
+    "url": "https://cdn.modrinth.com/data/u6dsqoa3/versions/AbCdEfGh/jei-1.21.1-neoforge-19.21.0.247.jar",
+    "project_id": "u6dsqoa3",
+    "version_id": "AbCdEfGh"
+  }
+}
+```
+
+### 三種執行結果與 Exit Code
+
+- `PLAN_ONLY`（exit `3`）：未指定 `--out` 時觸發。只給 `modrinth.index.json` 規格草稿與未解析下載來源清單（`unresolved`），**完全不寫入任何檔案**。
+- 成功寫出（exit `0`）：指定 `--out` 且目錄中所有 JAR 都在 `--downloads-map` 內解析完畢。寫入同目錄暫存檔、打包 ZIP、讀回解壓縮驗證每支檔案的 `sha512` 與大小、檢查目標不存在、原子替換 `os.replace`、並在最終檔案再次讀回確認，確保輸出的 `.mrpack` 絕對完整。
+- `BLOCK`（exit `2`）：指定 `--out` 但有模組未解析下載來源（`downloads_unresolved`，拒絕寫出未完成包）；輸出檔案已存在（`output_exists`，拒絕覆蓋）；輸出至系統目錄（`output_path_rejected`）；路徑包含符號連結（`symlink_not_allowed`）；或下載網址觸發安全閘。
+
+### 下載網址安全閘（URL Safety Gate）
+
+`--downloads-map` 中的所有 `url` 均受嚴格安全閘檢查（Fail-closed，任一不合格即整體 BLOCK）：
+- 僅接受 `https://` 協定，拒絕 `http://` 與 `file://`；
+- 拒絕包含帳號密碼之 `@` 字元；
+- 拒絕空白字元與不可見控制字元；
+- 拒絕 `localhost` 與 `*.localhost` 網域；
+- 拒絕純 IP 位址（如 `1.2.3.4`）；
+- 拒絕私有內部網段（如 `127.0.0.0/8`、`10.0.0.0/8`、`192.168.0.0/16`、`172.16.0.0/12`）。
+
+### 能力邊界
+
+1. 不下載任何檔案（純本機離線雜湊計算與清單產出）。
+2. 不查詢 Modrinth API、不做遠端雜湊查閱（`remote_modrinth_hash_lookup`）。
+3. 不打包 `overrides/`（不壓縮設定檔、世界檔或玩家存檔）。
+4. 不驗證遠端 URL 是否在網路上真實存在或可正常連線（`actual_launcher_install`）。
+
 ## 插件：不鎖平台、不限制你只有一條路
 
 所有插件都可放在 `plugins/你的插件名/`。插件必須宣告 `plugin.json`，由你明確呼叫，**不會在啟動時自動執行**。這是一種簡單 JSON I/O 契約，不必只用 Python；Node.js、Shell 或你自己的外部程式都可經過薄轉接使用。
