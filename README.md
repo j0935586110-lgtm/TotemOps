@@ -117,6 +117,8 @@ python3 tools/totem_operator.py fixplan /你的伺服器/logs/latest.log --json
 
 - **依賴閉包檢查**：不啟動遊戲、離線計算模組缺少的必要前置與版本衝突：
   `python3 tools/totem_operator.py closure /你的伺服器/mods/`
+- **全域裁決（triage）**：單一指令合成依賴閉包與日誌處方，最嚴格者勝並輸出排序動作：
+  `python3 tools/totem_operator.py triage /你的伺服器/mods/ --log /你的伺服器/logs/latest.log`
 - **匯出 Modrinth 索引**：將本機模組轉為可分享的 pack index（有明確下載對照才寫出 `.mrpack`）：
   `python3 tools/totem_operator.py packindex /你的伺服器/mods/ --name "MyPack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge`
 

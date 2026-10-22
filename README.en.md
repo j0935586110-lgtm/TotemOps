@@ -116,6 +116,8 @@ python3 tools/totem_operator.py fixplan /your-server/logs/latest.log --json
 
 - **Dependency closure check**: Offline analysis of missing mod dependencies without launching Minecraft:
   `python3 tools/totem_operator.py closure /your-server/mods/`
+- **Unified triage verdict**: Consolidates dependency closure and crash recipes into a single verdict with prioritized actions:
+  `python3 tools/totem_operator.py triage /your-server/mods/ --log /your-server/logs/latest.log`
 - **Export Modrinth pack index**: Turn local mods into a shareable pack index (writes `.mrpack` only with verified download sources):
   `python3 tools/totem_operator.py packindex /your-server/mods/ --name "MyPack" --version "1.0.0" --minecraft 1.21.1 --loader neoforge`
 

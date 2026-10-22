@@ -315,6 +315,10 @@ python3 tools/totem_operator.py closure mods/ --json
 
 **其餘任何語法（包含前綴修飾符、含有非數字後綴的版本標籤如 `-beta`、未知符號），一律進 `unresolved_ranges` 並標記為 `REVIEW_REQUIRED`，絕不會被當成滿足。**
 
+### 輸入 .mrpack 整合包檔案
+
+`closure` 亦支援直接傳入 `.mrpack` 封裝檔，但請注意其檢查範疇：工具僅解開並檢查 `overrides/mods/` 內的本地 JAR；`modrinth.index.json` 宣告的下載檔案只列於 `declared_not_inspectable`（僅列出檔名，無法檢驗內容）。若壓縮檔只有下載清單而無本地 JAR，將判定為 `BLOCK`（`mrpack_contains_no_local_jars`）；若 index 損毀或無法讀取為 `mrpack_index_unreadable`；若含不安全或重複路徑則回傳 `unsafe_override_path` 或 `duplicate_override_path`。一句話原則：**這種格式天生沒有模組檔可看，工具不會假裝看過。**
+
 ### 能力邊界與隱私保護
 
 - **能力邊界（必讀，不可美化）**：
@@ -324,6 +328,49 @@ python3 tools/totem_operator.py closure mods/ --json
   4. 不保證伺服器能順利開起來（`actual_server_boot`）。
   5. **`PASS` 僅代表本機宣告自洽，不等於「可以開服」。**
 - **隱私安全**：輸出報告僅包含檔案名稱（`file`），絕對不輸出本機目錄或伺服器絕對路徑；阻擋原因亦會清除路徑字串，避免伺服器目錄結構外洩。
+
+## 一個指令看全局：triage
+
+服主與維運者常遇到的痛點是：遇到開服失敗或整合包問題時，不知道該先看模組相依性（`closure`）還是看崩潰日誌處方（`fixplan`），還得手動比對兩邊的報告。`triage` 指令將**宣告依賴閉包**與**日誌修復處方**合成為**單一裁決**，不必自己對照兩份輸出，自動彙總問題並依嚴重度排序具體動作。
+
+```bash
+python3 tools/totem_operator.py triage mods/
+python3 tools/totem_operator.py triage mods/ --log server.log
+python3 tools/totem_operator.py triage mods/ --log server.log --side server --json
+```
+
+### 裁決優先序與 Exit Code
+
+`triage` 採用「最嚴格者勝」原則（`BLOCK` > `REVIEW_REQUIRED` > `PASS`），**其中一項 PASS 絕不會把另一項的問題蓋掉**。即使依賴完全自洽（`closure` PASS），只要崩潰日誌出現待處理問題，裁決依然為 `REVIEW_REQUIRED`；反之，就算日誌無任何異常，只要缺少必要模組就絕不會被放行。
+
+| Exit Code | 裁決狀態 (`verdict`) | 意義 |
+| --- | --- | --- |
+| `0` | `PASS` | 宣告 metadata 自洽且無待處理日誌處方；**僅代表宣告一致，不代表能開服** |
+| `3` | `REVIEW_REQUIRED` | 存在缺少依賴、版本不符、未解析範圍或日誌處方待檢視；**未執行任何變更** |
+| `2` | `BLOCK` | 模組或日誌檔案被安全閘阻擋（如路徑不存在、符號連結、無有效檔案或格式損毀） |
+
+### JSON 輸出重點欄位
+
+- `verdict`：全域裁決狀態（`PASS`、`REVIEW_REQUIRED`、`BLOCK`）。
+- `closure_summary`：依賴閉包摘要，包含 `status`、`missing` 數量、`version_mismatch` 數量、`incompatible_pairs` 數量與 `unresolved_ranges` 數量。
+- `fixplan_summary`：日誌修復處方摘要（若未給 `--log` 則為 `null`），包含 `status`、提取之崩潰訊號列表 `signals` 與首要建議處方 `top_action`。
+- `actions`：依嚴重度排序的具體行動清單，每項包含：
+  - `rank`：執行順序編號（從 1 起算）。
+  - `source`：問題來源（`closure` 或 `fixplan`）。
+  - `action`：具體建議操作說明。
+  - `why`：該項操作的原因與背景說明。
+  - `blocks_boot`：布林值，標註是否直接阻擋開服（阻擋者排在最前）。
+- `conflicts`：當依賴檢查為 PASS 但日誌偵測到崩潰訊號時的衝突警示列表（可能存在動態載入或未宣告依賴）。
+- `not_verified`：明確標註未驗證項目清單（`remote_availability`、`runtime_resolution`、`maven_full_semantics`、`actual_server_boot`）。
+- `next_step`：工具建議的下一步指引。
+
+### 能力邊界與隱私保護
+
+- **能力邊界**：
+  1. `PASS` 僅代表靜態宣告 metadata 自洽且無待處理日誌處方，絕不保證實際開服成功或無執行期錯誤。
+  2. 不查詢遠端儲存庫（`remote_availability`）、不模擬完整 Maven 解析（`maven_full_semantics`），亦不執行動態依賴解析或類別載入（`runtime_resolution`）。
+  3. 未給 `--log` 時 `fixplan_summary` 為 `null`，工具絕不臆測或暗示已執行過日誌分析。
+- **隱私安全**：日誌檔案僅於本地離線讀取，輸出僅記錄 `log_sha256`，絕不包含日誌原文內容或本機絕對路徑。
 
 ## 匯出 .mrpack：把本機 mods 變成可分享的 pack index
 

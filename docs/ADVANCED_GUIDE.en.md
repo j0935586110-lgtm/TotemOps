@@ -270,6 +270,10 @@ python3 tools/totem_operator.py closure mods/ --json
 
 **All other syntax forms (including modifier prefixes, non-numeric prerelease tags such as `-beta`, and unsupported operators) are routed to `unresolved_ranges` and marked `REVIEW_REQUIRED` — they are never assumed to be satisfied.**
 
+### Inspecting .mrpack archives
+
+`closure` also accepts `.mrpack` archives directly, subject to explicit inspection boundaries: the tool only extracts and inspects local JAR files inside `overrides/mods/`; files declared in `modrinth.index.json` are listed strictly under `declared_not_inspectable` (filenames only, contents cannot be inspected). If an archive contains only a download list without local JARs, it triggers `BLOCK` (`mrpack_contains_no_local_jars`); an unreadable or corrupt index returns `mrpack_index_unreadable`; unsafe or duplicate override paths trigger `unsafe_override_path` or `duplicate_override_path`. In short: **this format inherently contains no mod files to inspect; the tool does not pretend to have inspected them.**
+
 ### Capability boundaries and privacy
 
 - **Capability boundaries (must read; no overclaiming)**:
@@ -279,6 +283,49 @@ python3 tools/totem_operator.py closure mods/ --json
   4. Does not guarantee the server can successfully boot (`actual_server_boot`).
   5. **`PASS` only indicates local declared metadata self-consistency; `PASS` does not mean "ready to run server".**
 - **Privacy safety**: Output reports contain only relative filenames (`file`), never local filesystem directories or absolute paths; failure reasons also strip path fragments to prevent leaking server directory layout.
+
+## One command for the full picture: triage
+
+Server administrators and modpack authors often face a dilemma when troubleshooting startup failures: should they check declared dependencies (`closure`) or analyze crash logs (`fixplan`), and how do they reconcile both reports? The `triage` command consolidates **declared dependency closure** and **log repair recipes** into a **single verdict**, eliminating the need to cross-reference two outputs manually and ranking concrete actions by severity.
+
+```bash
+python3 tools/totem_operator.py triage mods/
+python3 tools/totem_operator.py triage mods/ --log server.log
+python3 tools/totem_operator.py triage mods/ --log server.log --side server --json
+```
+
+### Verdict precedence and exit codes
+
+`triage` applies a strict "strictest wins" rule (`BLOCK` > `REVIEW_REQUIRED` > `PASS`). **A PASS in one check never overrides or masks problems in the other.** Even if dependency closure is completely clean (`closure` PASS), any pending crash signal keeps the overall verdict at `REVIEW_REQUIRED`; conversely, a clean log never masks missing prerequisite mods.
+
+| Exit Code | Verdict (`verdict`) | Meaning |
+| --- | --- | --- |
+| `0` | `PASS` | Declared metadata is self-consistent and no log recipes are pending; **indicates consistent metadata only, not that the server is bootable** |
+| `3` | `REVIEW_REQUIRED` | Missing dependencies, version mismatches, unresolved ranges, or actionable log recipes detected; **no changes made** |
+| `2` | `BLOCK` | Mod path or log file blocked by safety gates (e.g. missing path, symlink, unsupported files, or corrupted archive) |
+
+### Key JSON output fields
+
+- `verdict`: Overall triage verdict (`PASS`, `REVIEW_REQUIRED`, `BLOCK`).
+- `closure_summary`: Summary of declared dependency closure, including `status`, `missing` count, `version_mismatch` count, `incompatible_pairs` count, and `unresolved_ranges` count.
+- `fixplan_summary`: Summary of log repair recipes (`null` if `--log` is omitted), containing `status`, detected crash `signals`, and the primary recommended recipe `top_action`.
+- `actions`: Prioritized list of actionable steps sorted by severity, where each entry contains:
+  - `rank`: Execution priority order (1-based index).
+  - `source`: Origin of the action (`closure` or `fixplan`).
+  - `action`: Concrete recommended action description.
+  - `why`: Rationale and context for the action.
+  - `blocks_boot`: Boolean flag indicating whether this issue directly prevents server boot (boot blockers ranked first).
+- `conflicts`: Discrepancy warnings when dependency closure is PASS but crash logs detect failure signals (suggesting dynamic runtime dependencies or undeclared requirements).
+- `not_verified`: Explicit list of unverified checks for this tool (`remote_availability`, `runtime_resolution`, `maven_full_semantics`, `actual_server_boot`).
+- `next_step`: Recommended next step guidance from the tool.
+
+### Capability boundaries and privacy
+
+- **Capability boundaries**:
+  1. `PASS` reflects static declared metadata consistency only and no pending recipes; it never guarantees actual server boot success or runtime error freedom.
+  2. Does not query remote repositories (`remote_availability`), simulate full Maven resolution (`maven_full_semantics`), or perform runtime class loading and dynamic resolution (`runtime_resolution`).
+  3. When `--log` is omitted, `fixplan_summary` is `null`; the tool never assumes or implies that log analysis was performed.
+- **Privacy safety**: Log files are inspected strictly offline; output includes only `log_sha256` without raw log contents or absolute server filesystem paths.
 
 ## Exporting .mrpack: turn local mods into a shareable pack index
 

@@ -1,13 +1,14 @@
 ---
 name: totem-ops
-description: Diagnose Minecraft Forge/NeoForge modpack problems, modsync-v2 update release risks, server crash logs, deterministic fixplan recipes, offline closure, Modrinth packindex, and isolated server startup with TotemOps compact CLI JSON.
+description: Diagnose Forge/NeoForge modpacks, modsync-v2 risks, crash logs, fixplan recipes, closure, triage verdict, packindex, and server smoke with TotemOps compact CLI JSON.
 license: Apache-2.0
 ---
 
 # TotemOps skill entry
 
-Read the repository root `SKILL.md` (relative to this file: `../../../SKILL.md`), then call the matching `./bin/totem-ops` command from the repository root. The root document is canonical and deliberately short. Do not read the entire repo, load all docs, or create an MCP server.
+Read root `SKILL.md` (`../../../SKILL.md`), then call `./bin/totem-ops` from repo root. Root is canonical and short. Do not read the entire repo or create MCP servers.
+- `triage PATH [--log LOG] [--side …] [--json]` — single verdict for closure & fixplan; `0=PASS` only means declared metadata is consistent, never claim fixed/ready to boot; without `--log` do not imply log analysis.
 
-Treat BLOCK as refusal and REVIEW_REQUIRED or PLAN_ONLY as **not approved / no action executed**. Never modify user worlds, player files, configs, or publish a modpack without explicit authorization. Never infer bootability from closure PASS; unresolved_ranges are not satisfied.
+Treat BLOCK as refusal and REVIEW_REQUIRED/PLAN_ONLY as **unapproved / no action executed**. Never modify user worlds, configs, or publish without explicit authorization. Never treat closure or triage PASS as runtime boot proof; never skip `actions` to tell user to reinstall; unresolved_ranges are not satisfied.
 
-Before writing any repair patch, compare released upstream fixes and existing Issue / PR evidence and record the regression baseline. See docs/UPSTREAM_REUSE_TRIAL_2472.md. A unit test or sandbox startup is not GAMEPLAY_VERIFIED; never claim GAMEPLAY_VERIFIED without actual client interaction evidence.
+Before writing patches, check upstream fixes and PR evidence with regression baseline (docs/UPSTREAM_REUSE_TRIAL_2472.md). Sandbox startup is not GAMEPLAY_VERIFIED; never claim it without client proof.
