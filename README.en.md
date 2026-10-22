@@ -97,6 +97,21 @@ python3 tools/totem_operator.py quick inspect /your-server/mods/
 
 On Windows, use `py -3` instead of `python3`. Replace the sample paths with your own. You can also tell your coding agent: “**Use the TotemOps skill to explain this latest.log. Don't change any files.**”
 
+## Get a repair recipe (fixplan)
+
+After finding clues, don't guess what to change. `fixplan` converts 9 crash log signals into **read-only repair recipes**:
+
+```bash
+# Human-readable prescription (confirm first, change second, verify last)
+python3 tools/totem_operator.py fixplan /your-server/logs/latest.log
+
+# Structured JSON document for coding agents
+python3 tools/totem_operator.py fixplan /your-server/logs/latest.log --json
+```
+
+- **Safety boundary**: Read-only log inspection, no uploads, no file modifications, no auto-repair; exit code `3` means "plan only, no action taken" (`0` is unused).
+- **Minimal exposure**: Outputs only `log_sha256` and line references without raw log text or absolute paths; every recipe begins with a read-only check, and modifying steps are marked `[Needs confirmation]`.
+
 For more commands and examples, see the [full English technical guide](docs/ADVANCED_GUIDE.en.md).
 
 ## What's next?

@@ -179,6 +179,32 @@
           </div>
         </section>
       </div>
+      <section class="panel" aria-labelledby="fixplan-title">
+        <div class="panelheader">
+          <h2 id="fixplan-title" data-i18n="fixplanTitle">拿到處方，而不是一堆猜測</h2>
+          <p data-i18n="fixplanLead">從崩潰線索到有序步驟，先確認、再變更、最後驗證。</p>
+        </div>
+        <div class="panelbody">
+          <div class="finding">
+            <div class="finding-head">
+              <strong data-i18n="fixplanWhatTitle">這是什麼</strong>
+            </div>
+            <p class="finding-detail" data-i18n="fixplanWhatBody">診斷只給線索；fixplan 把線索變成有序步驟（先確認、再變更、最後驗證）。</p>
+          </div>
+          <div class="finding">
+            <div class="finding-head">
+              <strong data-i18n="fixplanHowTitle">怎麼用</strong>
+            </div>
+            <p class="finding-detail" data-i18n-html="fixplanHowBody">本機終端機執行 <code>python3 tools/totem_operator.py fixplan latest.log</code>；Agent 請加上 <code>--json</code> 取得結構化處方文件。</p>
+          </div>
+          <div class="finding">
+            <div class="finding-head">
+              <strong data-i18n="fixplanSafetyTitle">安全邊界</strong>
+            </div>
+            <p class="finding-detail" data-i18n-html="fixplanSafetyBody">只讀日誌、不上傳、不改你的檔案、不自動修復；exit code <code>3</code> 代表「只有計畫，沒有動手」。</p>
+          </div>
+        </div>
+      </section>
       <div class="below">
         <section class="info-card">
           <h2 data-i18n="evidenceTitle">有趣的 Demo，背後有真實證據</h2>

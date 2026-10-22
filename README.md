@@ -98,6 +98,21 @@ python3 tools/totem_operator.py quick inspect /你的伺服器/mods/
 
 Windows 可把 `python3` 換成 `py -3`。路徑請換成你自己的。若沒有 Minecraft 專業知識，可請已安裝本專案的 AI 開發工具：「**用 TotemOps 幫我看這份 latest.log，先不要修改任何檔案。**」
 
+## 取得修復處方（fixplan）
+
+診斷出線索後，不用憑空猜測該改什麼。`fixplan` 會將日誌中的 9 種崩潰訊號轉化為**唯讀修復處方**：
+
+```bash
+# 人類可讀中文步驟（先確認、再變更、最後驗證）
+python3 tools/totem_operator.py fixplan /你的伺服器/logs/latest.log
+
+# 給 Coding Agent 的結構化 JSON
+python3 tools/totem_operator.py fixplan /你的伺服器/logs/latest.log --json
+```
+
+- **安全邊界**：只讀日誌、不上傳、不改檔案、不自動修復；exit code `3` 代表「只有計畫，未執行任何變更」（`0` 不使用）。
+- **最小揭露**：輸出僅含 `log_sha256` 與行號，不含日誌原文或絕對路徑；每份配方第一步皆為唯讀確認，會改檔案的步驟標註 `[需確認]`。
+
 **想看所有進階功能？** 參考 [完整中文手冊](docs/ADVANCED_GUIDE.zh-TW.md)，包含插件開關、相依查詢、沙箱測試、玩家更新包檢查與安全限制。
 
 ## 下一步要做什麼？
