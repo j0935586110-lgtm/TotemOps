@@ -197,7 +197,7 @@ def main(argv=None) -> int:
         return 2 if outcome["status"] == "BLOCK" else 0
     if args and args[0] in ("-h", "--help"):
         print("TotemOps 不死圖騰 | Minecraft assistant")
-        print("Usage: totem-ops <manifest|crash|smoke|doctor|inspect|diagnose|fixplan|plan|plan-deploy|status|solve-and-verify|runtime-seed|cas|preflight|quick|route|maintainer|friend-flow|plugins>")
+        print("Usage: totem-ops <manifest|crash|smoke|doctor|inspect|diagnose|fixplan|closure|packindex|plan|plan-deploy|status|solve-and-verify|runtime-seed|cas|preflight|quick|route|maintainer|friend-flow|plugins>")
         print("       totem-ops plugins list | totem-ops plugins run NAME COMMAND --input '{}'")
         print("       totem-ops <command> --help")
         return 0

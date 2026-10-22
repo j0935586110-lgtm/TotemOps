@@ -20,6 +20,8 @@ from pathlib import Path
 from mc_oss_bridge import doctor, plan, status
 from mc_package_inspector import InputBlocked, inspect_log, inspect_path
 from totem_repair_recipes import build_fixplan, format_human_plan
+from totem_dependency_closure import check_closure, format_human_closure
+from totem_mrpack import build_packindex, format_human_packindex
 
 
 def _get_git_branch() -> str:
@@ -674,6 +676,20 @@ Exit codes:
     )
     fp.add_argument("path")
     fp.add_argument("--json", action="store_true", help="Emit JSON output for agents")
+    cl = sub.add_parser("closure", help="Inspect declared mod dependency closure")
+    cl.add_argument("path")
+    cl.add_argument("--side", choices=("both", "client", "server"), default="both")
+    cl.add_argument("--json", action="store_true", help="Emit JSON output")
+    pi = sub.add_parser("packindex", help="Export Modrinth pack index and mrpack")
+    pi.add_argument("mods_dir")
+    pi.add_argument("--name", required=True)
+    pi.add_argument("--version", required=True)
+    pi.add_argument("--minecraft", required=True)
+    pi.add_argument("--loader", required=True)
+    pi.add_argument("--downloads-map", default=None)
+    pi.add_argument("--out", default=None)
+    pi.add_argument("--side", choices=("both", "client", "server"), default="both")
+    pi.add_argument("--json", action="store_true", help="Emit JSON output")
     s = sub.add_parser("status")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=25565)
@@ -738,6 +754,19 @@ Exit codes:
             result = diagnose(Path(args.path))
         elif args.command == "fixplan":
             result = build_fixplan(Path(args.path))
+        elif args.command == "closure":
+            result = check_closure(Path(args.path), side=args.side)
+        elif args.command == "packindex":
+            result = build_packindex(
+                Path(args.mods_dir),
+                name=args.name,
+                version=args.version,
+                minecraft=args.minecraft,
+                loader=args.loader,
+                downloads_map_path=Path(args.downloads_map) if args.downloads_map else None,
+                out_path=Path(args.out) if args.out else None,
+                side=args.side,
+            )
         elif args.command == "status":
             result = status(args.host, args.port)
         elif args.command == "plan":
@@ -770,8 +799,12 @@ Exit codes:
 
     require_verified = getattr(args, "require_verified", False)
     is_solve_and_verify = (getattr(args, "command", None) == "solve-and-verify")
-    if getattr(args, "command", None) == "fixplan":
+    cmd = getattr(args, "command", None)
+    if cmd == "fixplan":
         exit_code = 2 if (result.get("status") == "BLOCK" or result.get("code") == "BLOCK") else 3
+    elif cmd in ("closure", "packindex"):
+        st = result.get("status")
+        exit_code = 0 if st == "PASS" else 2 if st == "BLOCK" else 3
     else:
         exit_code = compute_exit_code(result, require_verified=require_verified, is_solve_and_verify=is_solve_and_verify)
 
@@ -785,6 +818,12 @@ Exit codes:
 
     if getattr(args, "command", None) == "fixplan" and not getattr(args, "json", False):
         print(format_human_plan(result))
+        return exit_code
+    if getattr(args, "command", None) == "closure" and not getattr(args, "json", False):
+        print(format_human_closure(result))
+        return exit_code
+    if getattr(args, "command", None) == "packindex" and not getattr(args, "json", False):
+        print(format_human_packindex(result))
         return exit_code
 
     print(json.dumps(result, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
