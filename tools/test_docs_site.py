@@ -200,6 +200,32 @@ class SharedHeaderTests(unittest.TestCase):
             self.assertTrue(path.is_file())
             self.assertIn("../README.", path.read_text(encoding="utf-8").splitlines()[2])
 
+    def test_every_diagnosis_rule_is_translated(self):
+        """The engine keeps Chinese strings; the UI must never fall back to them in EN."""
+        script = (ASSETS / "diagnose.js").read_text(encoding="utf-8")
+        codes = set(re.findall(r'code:\s*"([A-Z_]+)"', script))
+        self.assertGreaterEqual(len(codes), 10, "rule codes missing from diagnose.js")
+        for code in sorted(codes):
+            for suffix in ("title", "detail"):
+                for lang, table in (("zh", self.zh), ("en", self.en)):
+                    self.assertIn(f"diag.rule.{code}.{suffix}", table,
+                                  f"{lang} copy missing for {code}.{suffix}")
+            # the renderer must actually look the rule up, not print engine text directly
+            self.assertIn('"diag.rule." + f.code', script)
+
+    def test_every_dictionary_key_used_by_diagnose_js_exists(self):
+        script = (ASSETS / "diagnose.js").read_text(encoding="utf-8")
+        used = {k for k in re.findall(r'"(diag\.[A-Za-z0-9_.]+)"', script) if not k.endswith(".")}
+        self.assertGreaterEqual(len(used), 20, "diagnose.js stopped using dictionary keys")
+        for key in sorted(used):
+            for lang, table in (("zh", self.zh), ("en", self.en)):
+                self.assertIn(key, table, f"{lang} dictionary missing {key}")
+
+    def test_diagnose_rerenders_when_the_language_changes(self):
+        script = (ASSETS / "diagnose.js").read_text(encoding="utf-8")
+        self.assertIn('addEventListener("totem:language"', script)
+        self.assertIn("lastOut", script)
+
 
 if __name__ == "__main__":
     unittest.main()
