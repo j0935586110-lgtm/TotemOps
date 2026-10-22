@@ -22,6 +22,7 @@ from mc_package_inspector import InputBlocked, inspect_log, inspect_path
 from totem_repair_recipes import build_fixplan, format_human_plan
 from totem_dependency_closure import check_closure, format_human_closure
 from totem_mrpack import build_packindex, format_human_packindex
+from totem_triage import format_human_triage, run_triage
 
 
 def _get_git_branch() -> str:
@@ -677,9 +678,14 @@ Exit codes:
     fp.add_argument("path")
     fp.add_argument("--json", action="store_true", help="Emit JSON output for agents")
     cl = sub.add_parser("closure", help="Inspect declared mod dependency closure")
-    cl.add_argument("path")
+    cl.add_argument("path", help="Directory of JARs, a single JAR, or a .mrpack (overrides/mods only)")
     cl.add_argument("--side", choices=("both", "client", "server"), default="both")
     cl.add_argument("--json", action="store_true", help="Emit JSON output")
+    tr = sub.add_parser("triage", help="Triage dependency closure and log repair recipes")
+    tr.add_argument("path", help="Path to mods directory, single JAR, or .mrpack")
+    tr.add_argument("--log", default=None, help="Path to Minecraft crash/server log")
+    tr.add_argument("--side", choices=("both", "client", "server"), default="both")
+    tr.add_argument("--json", action="store_true", help="Emit JSON output")
     pi = sub.add_parser("packindex", help="Export Modrinth pack index and mrpack")
     pi.add_argument("mods_dir")
     pi.add_argument("--name", required=True)
@@ -767,6 +773,12 @@ Exit codes:
                 out_path=Path(args.out) if args.out else None,
                 side=args.side,
             )
+        elif args.command == "triage":
+            result = run_triage(
+                Path(args.path),
+                log_path=Path(args.log) if args.log else None,
+                side=args.side,
+            )
         elif args.command == "status":
             result = status(args.host, args.port)
         elif args.command == "plan":
@@ -805,6 +817,9 @@ Exit codes:
     elif cmd in ("closure", "packindex"):
         st = result.get("status")
         exit_code = 0 if st == "PASS" else 2 if st == "BLOCK" else 3
+    elif cmd == "triage":
+        st = result.get("verdict")
+        exit_code = 0 if st == "PASS" else 2 if st == "BLOCK" else 3
     else:
         exit_code = compute_exit_code(result, require_verified=require_verified, is_solve_and_verify=is_solve_and_verify)
 
@@ -824,6 +839,9 @@ Exit codes:
         return exit_code
     if getattr(args, "command", None) == "packindex" and not getattr(args, "json", False):
         print(format_human_packindex(result))
+        return exit_code
+    if getattr(args, "command", None) == "triage" and not getattr(args, "json", False):
+        print(format_human_triage(result))
         return exit_code
 
     print(json.dumps(result, ensure_ascii=False, separators=(",", ":"), sort_keys=True))

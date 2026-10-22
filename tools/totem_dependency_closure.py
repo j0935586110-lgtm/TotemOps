@@ -11,6 +11,8 @@ import argparse
 import json
 import re
 import sys
+import tempfile
+import zipfile
 from pathlib import Path
 
 try:
@@ -187,6 +189,7 @@ def check_closure(path: Path | str, side: str = "both") -> dict:
             "incompatible_pairs": [],
             "unresolved_ranges": [],
             "findings_reused": [],
+            "declared_not_inspectable": [],
             "not_verified": NOT_VERIFIED_CHECKS,
             "next_step": "輸入路徑不得為符號連結",
         }
@@ -205,9 +208,258 @@ def check_closure(path: Path | str, side: str = "both") -> dict:
             "incompatible_pairs": [],
             "unresolved_ranges": [],
             "findings_reused": [],
+            "declared_not_inspectable": [],
             "not_verified": NOT_VERIFIED_CHECKS,
             "next_step": "請確認輸入路徑是否存在",
         }
+
+    if path.is_file() and path.suffix.lower() == ".mrpack":
+        try:
+            with zipfile.ZipFile(path, "r") as z:
+                namelist = z.namelist()
+                if "modrinth.index.json" not in namelist:
+                    return {
+                        "schema": CLOSURE_SCHEMA,
+                        "mode": "offline_read_only",
+                        "verified_scope": "declared_metadata_only",
+                        "side": side,
+                        "status": "BLOCK",
+                        "reason": "mrpack_index_unreadable",
+                        "supplied": {"count": 0, "mods": []},
+                        "missing": [],
+                        "version_mismatch": [],
+                        "incompatible_pairs": [],
+                        "unresolved_ranges": [],
+                        "findings_reused": [],
+                        "declared_not_inspectable": [],
+                        "not_verified": NOT_VERIFIED_CHECKS,
+                        "next_step": "請確認 .mrpack 包含有效的 modrinth.index.json",
+                    }
+                try:
+                    raw_index = z.read("modrinth.index.json").decode("utf-8")
+                    index_data = json.loads(raw_index)
+                    if not isinstance(index_data, dict) or not isinstance(index_data.get("files"), list):
+                        raise ValueError("invalid_mrpack_index")
+                except Exception:
+                    return {
+                        "schema": CLOSURE_SCHEMA,
+                        "mode": "offline_read_only",
+                        "verified_scope": "declared_metadata_only",
+                        "side": side,
+                        "status": "BLOCK",
+                        "reason": "mrpack_index_unreadable",
+                        "supplied": {"count": 0, "mods": []},
+                        "missing": [],
+                        "version_mismatch": [],
+                        "incompatible_pairs": [],
+                        "unresolved_ranges": [],
+                        "findings_reused": [],
+                        "declared_not_inspectable": [],
+                        "not_verified": NOT_VERIFIED_CHECKS,
+                        "next_step": "請確認 .mrpack 包含有效的 modrinth.index.json",
+                    }
+
+                declared_not_inspectable = []
+                for file_entry in index_data.get("files", []):
+                    if isinstance(file_entry, dict) and file_entry.get("path"):
+                        f_name = Path(str(file_entry["path"])).name
+                        if f_name:
+                            declared_not_inspectable.append(f_name)
+                declared_not_inspectable.sort()
+
+                override_members = []
+                unsafe_members = []
+                for info in z.infolist():
+                    m_name = info.filename.replace("\\", "/")
+                    if not (m_name.startswith("overrides/mods/") and m_name.endswith(".jar") and not info.is_dir()):
+                        continue
+                    parts = m_name.split("/")
+                    if ".." in parts or m_name.startswith("/") or any(p in ("", ".") for p in parts):
+                        unsafe_members.append(m_name)
+                        continue
+                    override_members.append(info)
+
+                if unsafe_members:
+                    return {
+                        "schema": CLOSURE_SCHEMA,
+                        "mode": "offline_read_only",
+                        "verified_scope": "declared_metadata_only",
+                        "side": side,
+                        "status": "BLOCK",
+                        "reason": "unsafe_override_path",
+                        "supplied": {"count": 0, "mods": []},
+                        "missing": [],
+                        "version_mismatch": [],
+                        "incompatible_pairs": [],
+                        "unresolved_ranges": [],
+                        "findings_reused": [],
+                        "declared_not_inspectable": declared_not_inspectable,
+                        "not_verified": NOT_VERIFIED_CHECKS,
+                        "next_step": ".mrpack 內含不安全的 overrides 路徑，已拒絕檢查",
+                    }
+
+                if not override_members:
+                    return {
+                        "schema": CLOSURE_SCHEMA,
+                        "mode": "offline_read_only",
+                        "verified_scope": "declared_metadata_only",
+                        "side": side,
+                        "status": "BLOCK",
+                        "reason": "mrpack_contains_no_local_jars",
+                        "supplied": {"count": 0, "mods": []},
+                        "missing": [],
+                        "version_mismatch": [],
+                        "incompatible_pairs": [],
+                        "unresolved_ranges": [],
+                        "findings_reused": [],
+                        "declared_not_inspectable": declared_not_inspectable,
+                        "not_verified": NOT_VERIFIED_CHECKS,
+                        "next_step": "此格式只含下載清單，沒有模組檔可檢查",
+                    }
+
+                MAX_FILE_BYTES = 64 * 1024 * 1024
+                MAX_TOTAL_BYTES = 256 * 1024 * 1024
+                total_sz = sum(info.file_size for info in override_members)
+                if any(info.file_size > MAX_FILE_BYTES for info in override_members) or total_sz > MAX_TOTAL_BYTES:
+                    return {
+                        "schema": CLOSURE_SCHEMA,
+                        "mode": "offline_read_only",
+                        "verified_scope": "declared_metadata_only",
+                        "side": side,
+                        "status": "BLOCK",
+                        "reason": "mrpack_overrides_too_large",
+                        "supplied": {"count": 0, "mods": []},
+                        "missing": [],
+                        "version_mismatch": [],
+                        "incompatible_pairs": [],
+                        "unresolved_ranges": [],
+                        "findings_reused": [],
+                        "declared_not_inspectable": declared_not_inspectable,
+                        "not_verified": NOT_VERIFIED_CHECKS,
+                        "next_step": "覆寫模組檔案大小超出安全上限",
+                    }
+
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    tmp_path = Path(tmpdir)
+                    seen_dests = set()
+                    for info in override_members:
+                        rel_parts = info.filename.replace("\\", "/").split("/")[2:]
+                        dest = tmp_path / "__".join(rel_parts)
+                        dest.parent.mkdir(parents=True, exist_ok=True)
+                        resolved = dest.resolve()
+                        root_resolved = tmp_path.resolve()
+                        if root_resolved != resolved and root_resolved not in resolved.parents:
+                            return {
+                                "schema": CLOSURE_SCHEMA,
+                                "mode": "offline_read_only",
+                                "verified_scope": "declared_metadata_only",
+                                "side": side,
+                                "status": "BLOCK",
+                                "reason": "unsafe_override_path",
+                                "supplied": {"count": 0, "mods": []},
+                                "missing": [],
+                                "version_mismatch": [],
+                                "incompatible_pairs": [],
+                                "unresolved_ranges": [],
+                                "findings_reused": [],
+                                "declared_not_inspectable": declared_not_inspectable,
+                                "not_verified": NOT_VERIFIED_CHECKS,
+                                "next_step": ".mrpack 內含不安全的 overrides 路徑，已拒絕檢查",
+                            }
+                        if resolved in seen_dests:
+                            return {
+                                "schema": CLOSURE_SCHEMA,
+                                "mode": "offline_read_only",
+                                "verified_scope": "declared_metadata_only",
+                                "side": side,
+                                "status": "BLOCK",
+                                "reason": "duplicate_override_path",
+                                "supplied": {"count": 0, "mods": []},
+                                "missing": [],
+                                "version_mismatch": [],
+                                "incompatible_pairs": [],
+                                "unresolved_ranges": [],
+                                "findings_reused": [],
+                                "declared_not_inspectable": declared_not_inspectable,
+                                "not_verified": NOT_VERIFIED_CHECKS,
+                                "next_step": ".mrpack 內含重複的 overrides 路徑，已拒絕檢查",
+                            }
+                        seen_dests.add(resolved)
+                        with z.open(info) as src, open(dest, "wb") as dst:
+                            written = 0
+                            while True:
+                                chunk = src.read(65536)
+                                if not chunk:
+                                    break
+                                written += len(chunk)
+                                if written > MAX_FILE_BYTES:
+                                    return {
+                                        "schema": CLOSURE_SCHEMA,
+                                        "mode": "offline_read_only",
+                                        "verified_scope": "declared_metadata_only",
+                                        "side": side,
+                                        "status": "BLOCK",
+                                        "reason": "mrpack_overrides_too_large",
+                                        "supplied": {"count": 0, "mods": []},
+                                        "missing": [],
+                                        "version_mismatch": [],
+                                        "incompatible_pairs": [],
+                                        "unresolved_ranges": [],
+                                        "findings_reused": [],
+                                        "declared_not_inspectable": declared_not_inspectable,
+                                        "not_verified": NOT_VERIFIED_CHECKS,
+                                        "next_step": "覆寫模組檔案大小超出安全上限",
+                                    }
+                                dst.write(chunk)
+
+                    try:
+                        inspection = inspect_path(tmp_path)
+                    except (InputBlocked, OSError, ValueError, TypeError) as exc:
+                        reason_str = str(exc)[:80]
+                        if "/" in reason_str or "\\" in reason_str:
+                            reason_str = "input_blocked_invalid_package"
+                        return {
+                            "schema": CLOSURE_SCHEMA,
+                            "mode": "offline_read_only",
+                            "verified_scope": "declared_metadata_only",
+                            "side": side,
+                            "status": "BLOCK",
+                            "reason": reason_str,
+                            "supplied": {"count": 0, "mods": []},
+                            "missing": [],
+                            "version_mismatch": [],
+                            "incompatible_pairs": [],
+                            "unresolved_ranges": [],
+                            "findings_reused": [],
+                            "declared_not_inspectable": declared_not_inspectable,
+                            "not_verified": NOT_VERIFIED_CHECKS,
+                            "next_step": "請確認模組檔案有效",
+                        }
+
+                    return _evaluate_closure_from_inspection(
+                        inspection,
+                        side=side,
+                        declared_not_inspectable=declared_not_inspectable,
+                        input_kind="mrpack_overrides",
+                    )
+        except (zipfile.BadZipFile, OSError):
+            return {
+                "schema": CLOSURE_SCHEMA,
+                "mode": "offline_read_only",
+                "verified_scope": "declared_metadata_only",
+                "side": side,
+                "status": "BLOCK",
+                "reason": "mrpack_index_unreadable",
+                "supplied": {"count": 0, "mods": []},
+                "missing": [],
+                "version_mismatch": [],
+                "incompatible_pairs": [],
+                "unresolved_ranges": [],
+                "findings_reused": [],
+                "declared_not_inspectable": [],
+                "not_verified": NOT_VERIFIED_CHECKS,
+                "next_step": "請確認 .mrpack 包含有效的 modrinth.index.json",
+            }
 
     try:
         inspection = inspect_path(path)
@@ -229,9 +481,22 @@ def check_closure(path: Path | str, side: str = "both") -> dict:
             "incompatible_pairs": [],
             "unresolved_ranges": [],
             "findings_reused": [],
+            "declared_not_inspectable": [],
             "not_verified": NOT_VERIFIED_CHECKS,
             "next_step": "請確認輸入路徑是否為有效的模組檔案或資料夾",
         }
+
+    return _evaluate_closure_from_inspection(inspection, side=side, declared_not_inspectable=[])
+
+
+def _evaluate_closure_from_inspection(
+    inspection: dict,
+    side: str = "both",
+    declared_not_inspectable: list[str] | None = None,
+    input_kind: str | None = None,
+) -> dict:
+    if declared_not_inspectable is None:
+        declared_not_inspectable = []
 
     outputs = inspection.get("packages", [])
     if not outputs or inspection.get("status") == "BLOCK":
@@ -253,6 +518,7 @@ def check_closure(path: Path | str, side: str = "both") -> dict:
             "incompatible_pairs": [],
             "unresolved_ranges": [],
             "findings_reused": [],
+            "declared_not_inspectable": declared_not_inspectable,
             "not_verified": NOT_VERIFIED_CHECKS,
             "next_step": "請確認資料夾內包含有效的模組檔案",
         }
@@ -427,7 +693,7 @@ def check_closure(path: Path | str, side: str = "both") -> dict:
     else:
         next_step = "請檢查缺少的依賴或版本不符項目，補齊相容模組後重新檢查"
 
-    return {
+    res = {
         "schema": CLOSURE_SCHEMA,
         "mode": "offline_read_only",
         "verified_scope": "declared_metadata_only",
@@ -442,9 +708,13 @@ def check_closure(path: Path | str, side: str = "both") -> dict:
         "incompatible_pairs": incompatible_pairs,
         "unresolved_ranges": unresolved_ranges,
         "findings_reused": findings_reused,
+        "declared_not_inspectable": declared_not_inspectable,
         "not_verified": NOT_VERIFIED_CHECKS,
         "next_step": next_step,
     }
+    if input_kind:
+        res["input_kind"] = input_kind
+    return res
 
 
 def format_human_closure(data: dict) -> str:
@@ -499,7 +769,7 @@ def format_human_closure(data: dict) -> str:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="TotemOps offline dependency closure verifier")
-    parser.add_argument("path", help="Path to mod JAR, .mrpack, .zip, or directory")
+    parser.add_argument("path", help="Directory of JARs, a single JAR, or a .mrpack (overrides/mods only)")
     parser.add_argument("--side", choices=("both", "client", "server"), default="both")
     parser.add_argument("--json", action="store_true", help="Output JSON object")
     args = parser.parse_args(argv)

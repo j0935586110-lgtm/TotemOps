@@ -328,6 +328,146 @@ side="SERVER"
         self.assertIn("TotemOps 依賴閉包檢查結果", human_text)
         self.assertIn("balm", human_text)
 
+    def _make_mrpack(self, name: str, index_obj: dict | None, override_jars: dict[str, str] | None = None) -> Path:
+        import io
+        p = self.root / name
+        with zipfile.ZipFile(p, "w", zipfile.ZIP_DEFLATED) as z:
+            if index_obj is not None:
+                z.writestr("modrinth.index.json", json.dumps(index_obj))
+            if override_jars:
+                for jar_name, toml_content in override_jars.items():
+                    buf = io.BytesIO()
+                    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as jz:
+                        jz.writestr("META-INF/mods.toml", toml_content)
+                    z.writestr(f"overrides/mods/{jar_name}", buf.getvalue())
+        return p
+
+    def test_10_mrpack_with_overrides(self):
+        """10. closure: .mrpack with overrides/mods/ -> inspects overrides, sets input_kind and declared_not_inspectable."""
+        index = {
+            "formatVersion": 1,
+            "game": "minecraft",
+            "versionId": "1.0.0",
+            "name": "TestPack",
+            "files": [
+                {"path": "mods/remote-lib-1.0.jar", "hashes": {"sha1": "abc"}},
+                {"path": "mods/remote-hud-2.0.jar", "hashes": {"sha1": "def"}},
+            ],
+        }
+        pack = self._make_mrpack("pack_with_overrides.mrpack", index, {
+            "waystones.jar": FORGE_WAYSTONES,
+            "balm.jar": FORGE_BALM_21,
+        })
+        res = check_closure(pack)
+        self.assertEqual(res["status"], "PASS")
+        self.assertEqual(res["input_kind"], "mrpack_overrides")
+        self.assertEqual(res["declared_not_inspectable"], ["remote-hud-2.0.jar", "remote-lib-1.0.jar"])
+        self.assertEqual(res["supplied"]["count"], 2)
+
+        # CLI test
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            code = mc_operator_main(["closure", str(pack), "--json"])
+        self.assertEqual(code, 0)
+        parsed = json.loads(out.getvalue())
+        self.assertEqual(parsed["status"], "PASS")
+        self.assertEqual(parsed["input_kind"], "mrpack_overrides")
+
+    def test_11_mrpack_index_only_blocks(self):
+        """11. closure: .mrpack with only index (no overrides) -> BLOCK mrpack_contains_no_local_jars, exit 2."""
+        index = {
+            "formatVersion": 1,
+            "game": "minecraft",
+            "versionId": "1.0.0",
+            "name": "TestPack",
+            "files": [{"path": "mods/remote.jar"}],
+        }
+        pack = self._make_mrpack("index_only.mrpack", index)
+        res = check_closure(pack)
+        self.assertEqual(res["status"], "BLOCK")
+        self.assertEqual(res["reason"], "mrpack_contains_no_local_jars")
+        self.assertEqual(res["declared_not_inspectable"], ["remote.jar"])
+        self.assertIn("此格式只含下載清單，沒有模組檔可檢查", res["next_step"])
+
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            code = mc_operator_main(["closure", str(pack), "--json"])
+        self.assertEqual(code, 2)
+        parsed = json.loads(out.getvalue())
+        self.assertEqual(parsed["status"], "BLOCK")
+        self.assertEqual(parsed["reason"], "mrpack_contains_no_local_jars")
+
+    def test_12_mrpack_index_missing_or_unreadable(self):
+        """12. closure: .mrpack with missing or unreadable index -> BLOCK mrpack_index_unreadable, exit 2."""
+        # Missing index
+        pack_no_index = self._make_mrpack("no_index.mrpack", None, {"a.jar": FORGE_BALM_21})
+        res_no_index = check_closure(pack_no_index)
+        self.assertEqual(res_no_index["status"], "BLOCK")
+        self.assertEqual(res_no_index["reason"], "mrpack_index_unreadable")
+
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            code = mc_operator_main(["closure", str(pack_no_index), "--json"])
+        self.assertEqual(code, 2)
+
+        # Corrupted index
+        corrupted = self.root / "corrupted.mrpack"
+        with zipfile.ZipFile(corrupted, "w") as z:
+            z.writestr("modrinth.index.json", "{not valid json")
+        res_corrupt = check_closure(corrupted)
+        self.assertEqual(res_corrupt["status"], "BLOCK")
+        self.assertEqual(res_corrupt["reason"], "mrpack_index_unreadable")
+
+    def test_13_mrpack_overrides_too_large(self):
+        """13. closure: .mrpack with overrides exceeding limits -> BLOCK mrpack_overrides_too_large, exit 2."""
+        index = {"formatVersion": 1, "files": []}
+        pack = self.root / "oversized.mrpack"
+        with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("modrinth.index.json", json.dumps(index))
+            # 65 MB uncompressed, but compresses down to ~66 KB
+            z.writestr("overrides/mods/giant.jar", b"\0" * (65 * 1024 * 1024))
+
+        res = check_closure(pack)
+        self.assertEqual(res["status"], "BLOCK")
+        self.assertEqual(res["reason"], "mrpack_overrides_too_large")
+
+        with patch("sys.stdout", new_callable=StringIO) as out:
+            code = mc_operator_main(["closure", str(pack), "--json"])
+        self.assertEqual(code, 2)
+
+    def test_14_non_mrpack_declared_not_inspectable_empty(self):
+        """14. closure: regular folder/jar has empty declared_not_inspectable and no input_kind."""
+        jar = self._make_jar("waystones.jar", FORGE_WAYSTONES)
+        res = check_closure(jar)
+        self.assertEqual(res["declared_not_inspectable"], [])
+        self.assertNotIn("input_kind", res)
+
+    def test_15_mrpack_traversal_path_blocked(self):
+        """15. closure: traversal entry under overrides/mods -> BLOCK unsafe_override_path, nothing escapes."""
+        import io
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as jz:
+            jz.writestr("META-INF/mods.toml", FORGE_BALM_21)
+        pack = self.root / "traversal.mrpack"
+        with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("modrinth.index.json", json.dumps({"formatVersion": 1, "files": []}))
+            z.writestr("overrides/mods/../escaped.jar", buf.getvalue())
+
+        res = check_closure(pack)
+        self.assertEqual(res["status"], "BLOCK")
+        self.assertEqual(res["reason"], "unsafe_override_path")
+        self.assertFalse((self.root / "escaped.jar").exists())
+        with patch("sys.stdout", new_callable=StringIO):
+            self.assertEqual(mc_operator_main(["closure", str(pack), "--json"]), 2)
+
+    def test_16_mrpack_nested_same_basename_kept(self):
+        """16. closure: nested overrides with identical basenames are both inspected, not overwritten."""
+        pack = self._make_mrpack("nested.mrpack", {"formatVersion": 1, "files": []}, {
+            "a/dup.jar": FORGE_BALM_21,
+            "b/dup.jar": FORGE_BALM_3,
+        })
+        res = check_closure(pack)
+        self.assertEqual(res["supplied"]["count"], 2)
+        versions = sorted(m["version"] for m in res["supplied"]["mods"])
+        self.assertEqual(versions, ["21.1.0", "3.0"])
+
 
 if __name__ == "__main__":
     unittest.main()
