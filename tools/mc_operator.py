@@ -8,13 +8,96 @@ Modrinth artifacts and launch a disposable Docker server; never a live world.
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
+import os
 import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from mc_oss_bridge import doctor, plan, status
 from mc_package_inspector import InputBlocked, inspect_log, inspect_path
+
+
+def _get_git_branch() -> str:
+    for candidate in [Path.cwd(), Path(__file__).resolve().parent.parent]:
+        try:
+            proc = subprocess.run(["git", "-C", str(candidate), "rev-parse", "--abbrev-ref", "HEAD"],
+                                  capture_output=True, text=True, timeout=5)
+            if proc.returncode == 0 and proc.stdout.strip():
+                return proc.stdout.strip()
+        except Exception:
+            pass
+    return "unknown"
+
+
+def _check_receipt_path_safety(p: Path) -> None:
+    if not p.is_absolute():
+        raise ValueError("receipt_path_rejected")
+    if p.is_symlink() or os.path.islink(p):
+        raise ValueError("receipt_path_rejected")
+    norm_p = os.path.abspath(str(p))
+    forbidden_prefixes = ("/etc", "/usr", "/boot", "/sys", "/proc", "/dev", "/bin", "/sbin", "/lib", "/lib64")
+    for pref in forbidden_prefixes:
+        if norm_p == pref or norm_p.startswith(pref + "/"):
+            raise ValueError("receipt_path_rejected")
+    try:
+        home_ssh = os.path.abspath(str(Path.home() / ".ssh"))
+    except (RuntimeError, OSError):
+        home_ssh = None
+    if home_ssh and (norm_p == home_ssh or norm_p.startswith(home_ssh + "/")):
+        raise ValueError("receipt_path_rejected")
+    curr = p.parent
+    while curr != curr.parent:
+        if curr.is_symlink() or os.path.islink(curr):
+            raise ValueError("receipt_path_rejected")
+        if curr.exists():
+            break
+        curr = curr.parent
+
+
+def write_receipt(receipt_path: Path, result: dict, exit_code: int) -> None:
+    _check_receipt_path_safety(receipt_path)
+    receipt_data = dict(result)
+    receipt_data["receipt_schema"] = 1
+    receipt_data["created_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    receipt_data["exit_code"] = exit_code
+    receipt_data["branch"] = _get_git_branch()
+
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    temp_file = tempfile.NamedTemporaryFile("w", dir=receipt_path.parent, delete=False, encoding="utf-8")
+    temp_name = temp_file.name
+    try:
+        json.dump(receipt_data, temp_file, ensure_ascii=False, indent=2)
+        temp_file.flush()
+        os.fsync(temp_file.fileno())
+        temp_file.close()
+        os.replace(temp_name, receipt_path)
+    except Exception:
+        if os.path.exists(temp_name):
+            try:
+                os.unlink(temp_name)
+            except OSError:
+                pass
+        raise
+
+
+def compute_exit_code(result: dict, require_verified: bool = False, is_solve_and_verify: bool = True) -> int:
+    status = result.get("status")
+    code = result.get("code")
+    if is_solve_and_verify:
+        if require_verified:
+            return 0 if status == "VERIFIED_ON_SANDBOX" else 4
+        if status == "VERIFIED_ON_SANDBOX":
+            return 0
+        if status == "BLOCK" or code == "BLOCK":
+            return 2
+        if status in ("PLAN_ONLY", "STAGED_ONLY"):
+            return 3
+        return 5
+    return 2 if status == "BLOCK" or code == "BLOCK" else 0
 
 
 def summarize_package(path: Path) -> dict:
@@ -106,7 +189,11 @@ def solve_and_verify(log: Path, project: str | None, game_version: str | None,
                      local_cache: Path | None = None,
                      loader_version: str | None = None, loader_seed: Path | None = None,
                      cold_baseline_seconds: float = 0,
-                     cas_enabled: bool = False) -> dict:
+                     cas_enabled: bool = False,
+                     receipt_out: Path | None = None,
+                     require_verified: bool = False,
+                     infer_project: bool = False,
+                     reuse_runtime: bool = False) -> dict:
     """One user-invoked flow. Never change a live server or infer a Modrinth ID."""
     import hashlib
     import os
@@ -148,6 +235,30 @@ def solve_and_verify(log: Path, project: str | None, game_version: str | None,
         "stage": "diagnosed",
         "recipe_schema": 1, "tool_version": "totemops-p0",
     }
+    if receipt_out is not None:
+        try:
+            _check_receipt_path_safety(receipt_out)
+        except ValueError:
+            return {"status": "BLOCK", "reason": "receipt_path_rejected"}
+
+    if infer_project:
+        from totem_log_extract import extract_missing_dependency
+        extraction = extract_missing_dependency(log)
+        if not project:
+            if extraction.get("status") == "OK":
+                project = extraction["project"]
+                result["project_inference"] = extraction
+            else:
+                return {
+                    **result,
+                    "status": "BLOCK",
+                    "reason": "ambiguous_project_inference",
+                    "project_inference": extraction,
+                    "candidates": extraction.get("candidates", []),
+                }
+        else:
+            result["project_inference"] = extraction
+
     if not (project and game_version and loader):
         result["reason"] = "project_game_version_and_loader_required_for_download"
         result["next_step"] = "Choose an actual Modrinth project and target versions"
@@ -347,7 +458,62 @@ def solve_and_verify(log: Path, project: str | None, game_version: str | None,
             return {**result, "status": "STAGED_ONLY",
                     "stage": "downloaded_and_inspected", "sandbox_verified": False,
                     "next_step": "Run the same pinned selection in sandbox server mode"}
-        if loader == "neoforge" and loader_version:
+        runtime_reuse_info = None
+        if reuse_runtime and loader == "neoforge":
+            from totem_runtime_seed import prepare_seed, SeedRejected
+            target_seed = None
+            effective_loader_version = loader_version
+            if loader_version:
+                target_seed = sandbox_root / "runtime-seed" / f"neoforge-{loader_version}"
+            else:
+                rt_dir = sandbox_root / "runtime-seed"
+                if rt_dir.is_dir() and not rt_dir.is_symlink():
+                    for child in sorted(rt_dir.iterdir()):
+                        if child.is_dir() and not child.is_symlink() and child.name.startswith("neoforge-"):
+                            m_file = child / "totemops-runtime-seed.json"
+                            if m_file.is_file() and not m_file.is_symlink():
+                                try:
+                                    m_data = json.loads(m_file.read_text(encoding="utf-8"))
+                                    if m_data.get("game_version") == game_version and m_data.get("type") == "NEOFORGE":
+                                        target_seed = child
+                                        effective_loader_version = m_data.get("loader_version")
+                                        break
+                                except Exception:
+                                    pass
+
+            if target_seed is not None and target_seed.is_dir():
+                try:
+                    reuse_prep = prepare_seed(
+                        target_seed, run_dir / "data", sandbox_root,
+                        game_version, effective_loader_version,
+                        result["docker_image_digest"],
+                        cold_baseline_seconds
+                    )
+                except SeedRejected as exc:
+                    return {**result, "status": "BLOCK",
+                            "reason": "runtime_seed_invalid", "detail": str(exc)[:100]}
+
+                if reuse_prep.get("status") == "LOCAL_LOADER_CLONE":
+                    runtime_reuse_info = {
+                        "decision": "REUSED",
+                        "path": str(target_seed),
+                        "loader_version": str(effective_loader_version),
+                    }
+                else:
+                    runtime_reuse_info = {
+                        "decision": "MISSING",
+                        "path": str(target_seed),
+                        "loader_version": str(effective_loader_version or "unknown"),
+                    }
+            else:
+                missing_path = target_seed if target_seed else (sandbox_root / "runtime-seed" / f"neoforge-{loader_version or 'unknown'}")
+                runtime_reuse_info = {
+                    "decision": "MISSING",
+                    "path": str(missing_path),
+                    "loader_version": str(loader_version or "unknown"),
+                }
+            result["runtime_reuse"] = runtime_reuse_info
+        elif loader == "neoforge" and loader_version:
             seed = loader_seed if loader_seed is not None else (
                 sandbox_root / "loader-seeds" / f"neoforge-{game_version}-{loader_version}")
             try:
@@ -361,6 +527,7 @@ def solve_and_verify(log: Path, project: str | None, game_version: str | None,
             result["runtime_reuse"] = reuse_runtime
         result["stage"] = "ephemeral_server_starting"
         # Deliberately no -p: isolated Docker container does not expose a server on the host.
+        active_loader_version = loader_version or (effective_loader_version if (reuse_runtime and runtime_reuse_info and runtime_reuse_info.get("decision") == "REUSED") else None)
         container_cmd = [
             "docker", "run", "-d", "--rm", "--pull", "never", "--name", container,
             "--network", "bridge", "--memory", "3g", "--cpus", "2",
@@ -377,8 +544,8 @@ def solve_and_verify(log: Path, project: str | None, game_version: str | None,
             "-e", "SKIP_NSSWITCH_CONF=TRUE", "-e", "SKIP_CHOWN_DATA=TRUE",
             "-e", "VIEW_DISTANCE=3", "-e", "SIMULATION_DISTANCE=3",
             "-e", "LEVEL_TYPE=FLAT",
-            *(["-e", f"NEOFORGE_VERSION={loader_version}"]
-              if loader == "neoforge" and loader_version else []),
+            *(["-e", f"NEOFORGE_VERSION={active_loader_version}"]
+              if loader == "neoforge" and active_loader_version else []),
             image,
         ]
         started = False
@@ -423,6 +590,35 @@ def solve_and_verify(log: Path, project: str | None, game_version: str | None,
                             result["tested_game_version"] = game_version
                             result["total_seconds"] = round(time.monotonic() - started_at, 3)
                             result["next_step"] = "Owner reviews exact mod versions and feature-level tests"
+
+                            if reuse_runtime and loader == "neoforge" and runtime_reuse_info and runtime_reuse_info.get("decision") == "MISSING":
+                                from totem_runtime_seed import create_seed, SeedRejected
+                                stored_version = loader_version
+                                if not stored_version:
+                                    installer_manifest = run_dir / "data" / ".neoforge-manifest.json"
+                                    if installer_manifest.is_file() and not installer_manifest.is_symlink():
+                                        try:
+                                            m_data = json.loads(installer_manifest.read_text(encoding="utf-8"))
+                                            stored_version = m_data.get("forgeVersion")
+                                        except Exception:
+                                            pass
+                                if stored_version:
+                                    dest_seed = sandbox_root / "runtime-seed" / f"neoforge-{stored_version}"
+                                    if not dest_seed.exists() and not dest_seed.is_symlink():
+                                        try:
+                                            create_seed(
+                                                run_dir / "data", dest_seed, sandbox_root,
+                                                game_version, stored_version,
+                                                result["docker_image_digest"]
+                                            )
+                                            result["runtime_reuse"] = {
+                                                "decision": "STORED",
+                                                "path": str(dest_seed),
+                                                "loader_version": str(stored_version),
+                                            }
+                                        except (SeedRejected, OSError):
+                                            pass
+
                             return result
                     except ValueError:
                         pass
@@ -476,7 +672,18 @@ def main(argv=None) -> int:
     d.add_argument("--loader", choices=("VANILLA", "FORGE", "NEOFORGE"), required=True)
     d.add_argument("--memory", required=True)
     d.add_argument("--port", type=int, default=25565)
-    v = sub.add_parser("solve-and-verify")
+    v = sub.add_parser(
+        "solve-and-verify",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Exit codes:
+  0 = VERIFIED_ON_SANDBOX (successful server verification)
+  2 = BLOCK (safety gate blocked, invalid argument, or policy violation)
+  3 = PLAN_ONLY or STAGED_ONLY (operation planned or staged, but not verified)
+  4 = Required verification not achieved (--require-verified given and status != VERIFIED_ON_SANDBOX)
+  5 = Other (execution attempted but verification was not achieved)
+"""
+    )
     v.add_argument("--log", required=True)
     v.add_argument("--project", default=None, help="Explicitly selected Modrinth ID/slug")
     v.add_argument("--game-version", default=None)
@@ -499,6 +706,14 @@ def main(argv=None) -> int:
                    help="Actual prior cold install duration for local-vs-download comparison")
     v.add_argument("--cas", action="store_true",
                    help="Opt in to persistent SHA-256 deduplicated JAR cache inside marked sandbox")
+    v.add_argument("--require-verified", action="store_true",
+                   help="Require VERIFIED_ON_SANDBOX; exits with code 4 if verification is not achieved")
+    v.add_argument("--receipt-out", default=None,
+                   help="Write atomic JSON execution receipt to an absolute path")
+    v.add_argument("--infer-project", action="store_true",
+                   help="Infer missing dependency Modrinth project deterministically from log")
+    v.add_argument("--reuse-runtime", action="store_true",
+                   help="Reuse validated local NeoForge runtime seed from sandbox across runs")
     sub.add_parser("sync-publish")
     args = parser.parse_args(argv)
     try:
@@ -515,6 +730,7 @@ def main(argv=None) -> int:
         elif args.command == "plan-deploy":
             result = plan_deploy(args.version, args.loader, args.memory, args.port)
         elif args.command == "solve-and-verify":
+            receipt_out_path = Path(args.receipt_out) if args.receipt_out else None
             result = solve_and_verify(Path(args.log), args.project, args.game_version,
                                       args.loader, Path(args.sandbox_root) if args.sandbox_root else None,
                                       args.execute_sandbox, args.max_wait, args.version_id,
@@ -523,7 +739,11 @@ def main(argv=None) -> int:
                                       Path(args.local_cache) if args.local_cache else None,
                                       args.loader_version,
                                       Path(args.loader_seed) if args.loader_seed else None,
-                                      args.cold_baseline_seconds, args.cas)
+                                      args.cold_baseline_seconds, args.cas,
+                                      receipt_out=receipt_out_path,
+                                      require_verified=args.require_verified,
+                                      infer_project=args.infer_project,
+                                      reuse_runtime=args.reuse_runtime)
         else:
             result = {
                 "status": "BLOCK",
@@ -532,8 +752,21 @@ def main(argv=None) -> int:
             }
     except (InputBlocked, OSError, ValueError, TypeError) as err:
         result = {"status": "BLOCK", "reason": str(err)[:120]}
+
+    require_verified = getattr(args, "require_verified", False)
+    is_solve_and_verify = (getattr(args, "command", None) == "solve-and-verify")
+    exit_code = compute_exit_code(result, require_verified=require_verified, is_solve_and_verify=is_solve_and_verify)
+
+    receipt_out_arg = getattr(args, "receipt_out", None)
+    if receipt_out_arg and result.get("reason") != "receipt_path_rejected":
+        try:
+            write_receipt(Path(receipt_out_arg), result, exit_code)
+        except ValueError:
+            result = {"status": "BLOCK", "reason": "receipt_path_rejected"}
+            exit_code = compute_exit_code(result, require_verified=require_verified, is_solve_and_verify=is_solve_and_verify)
+
     print(json.dumps(result, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
-    return 2 if result.get("status") == "BLOCK" or result.get("code") == "BLOCK" else 0
+    return exit_code
 
 
 if __name__ == "__main__":
