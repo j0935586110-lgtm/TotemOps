@@ -272,6 +272,8 @@ diag_zh = {
     "fixplanHowBody": "本機終端機執行 <code>python3 tools/totem_operator.py fixplan latest.log</code>；Agent 請加上 <code>--json</code> 取得結構化處方文件。",
     "fixplanSafetyTitle": "安全邊界",
     "fixplanSafetyBody": "只讀日誌、不上傳、不改你的檔案、不自動修復；exit code <code>3</code> 代表「只有計畫，沒有動手」。",
+    "fixplanTriageTitle": "想一次看全局",
+    "fixplanTriageBody": "把「依賴有沒有缺」與「日誌處方」合成單一裁決：本機執行 <code>python3 tools/totem_operator.py triage mods/ --log latest.log</code>；最嚴重的問題排在最前面，其中一項通過不會蓋掉另一項。",
     "footer": "TotemOps 不死圖騰 · Apache-2.0 開源工具 · 非 Mojang／Microsoft 官方產品。<br>使用者資料不會被此網頁傳送，但若安裝第三方瀏覽器擴充套件，仍應自行評估其存取權限。",
     "backHome": "← 返回首頁",
 }
@@ -329,6 +331,8 @@ diag_en = {
     "fixplanHowBody": "Run <code>python3 tools/totem_operator.py fixplan latest.log</code> in your terminal; agents add <code>--json</code> for a structured recipe document.",
     "fixplanSafetyTitle": "Safety boundary",
     "fixplanSafetyBody": "Read-only log inspection, no uploads, no file modifications, no auto-repair; exit code <code>3</code> means \"plan only, no action taken\".",
+    "fixplanTriageTitle": "Want the whole picture at once",
+    "fixplanTriageBody": "Merge \"is any dependency missing\" and \"what the log prescribes\" into one verdict: run <code>python3 tools/totem_operator.py triage mods/ --log latest.log</code> locally. The most serious problem comes first, and one passing check never hides a failing one.",
     "footer": "TotemOps · Apache-2.0 open source · Unofficial, not affiliated with Mojang or Microsoft.<br>This page never transmits your data, but review the permissions of any third-party browser extension you install.",
     "backHome": "← Back to home",
 }

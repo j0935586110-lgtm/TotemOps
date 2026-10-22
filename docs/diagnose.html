@@ -203,6 +203,12 @@
             </div>
             <p class="finding-detail" data-i18n-html="fixplanSafetyBody">只讀日誌、不上傳、不改你的檔案、不自動修復；exit code <code>3</code> 代表「只有計畫，沒有動手」。</p>
           </div>
+          <div class="finding">
+            <div class="finding-head">
+              <strong data-i18n="fixplanTriageTitle">想一次看全局</strong>
+            </div>
+            <p class="finding-detail" data-i18n-html="fixplanTriageBody">把「依賴有沒有缺」與「日誌處方」合成單一裁決：本機執行 <code>python3 tools/totem_operator.py triage mods/ --log latest.log</code>；最嚴重的問題排在最前面，其中一項通過不會蓋掉另一項。</p>
+          </div>
         </div>
       </section>
       <div class="below">

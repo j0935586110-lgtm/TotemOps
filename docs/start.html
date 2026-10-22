@@ -116,6 +116,27 @@ cd TotemOps</pre></li>
 <pre class="code">./bin/totem-ops smoke --help</pre></article>
 </div>
 </section>
+<section id="newer">
+<h2 class="section-head"><span class="zh">體檢、裁決、匯出：三個新指令</span><span class="en">Inspect, decide, export: three newer commands</span></h2>
+<p class="explain"><span class="zh">都在本機離線跑，不開遊戲、不上傳。綠燈只代表「宣告的資料互相對得上」，不代表伺服器一定開得起來。</span><span class="en">All of these run offline on your machine. A green result only means the declared metadata agrees with itself, not that the server will boot.</span></p>
+<div class="grid">
+<article class="panel"><span class="tag">04 / CLOSURE</span>
+<h3><span class="zh">依賴閉包</span><span class="en">Dependency closure</span></h3>
+<p class="zh">讀 JAR 裡宣告的依賴，算出還缺哪個前置、被誰要求、版本範圍對不對；看不懂的版本寫法會標成待確認，不會硬猜。</p>
+<p class="en">Read declared dependencies inside the JARs: what prerequisite is missing, who requires it, whether the version range fits. Unreadable range syntax is flagged instead of guessed.</p>
+<pre class="code">./bin/totem-ops closure ./mods --json</pre></article>
+<article class="panel"><span class="tag">05 / TRIAGE</span>
+<h3><span class="zh">一個裁決</span><span class="en">One verdict</span></h3>
+<p class="zh">把「依賴有沒有缺」和「日誌處方」合成一份結論，最嚴重的排最前面；其中一項通過不會蓋掉另一項。沒給日誌就不會假裝分析過日誌。</p>
+<p class="en">Merges dependency findings and log prescriptions into one verdict, worst first. One passing check never hides a failing one, and without a log it never pretends to have read one.</p>
+<pre class="code">./bin/totem-ops triage ./mods --log ./latest.log --json</pre></article>
+<article class="panel"><span class="tag">06 / PACKINDEX</span>
+<h3><span class="zh">匯出整合包索引</span><span class="en">Export a pack index</span></h3>
+<p class="zh">算出每個 JAR 的指紋並寫成 Modrinth 格式清單；只有每個檔案都有明確 HTTPS 下載來源時才寫出 <code>.mrpack</code>，缺一個就不寫。</p>
+<p class="en">Hash every JAR into a Modrinth-style index. A <code>.mrpack</code> is written only when every file has an explicit HTTPS download source; one missing source means no file.</p>
+<pre class="code">./bin/totem-ops packindex ./mods --name MyPack --version 1.0.0 --minecraft 1.21.1 --loader neoforge</pre></article>
+</div>
+</section>
 <section id="contract">
 <h2 class="section-head"><span class="zh">JSON 回報與發布守門規則</span><span class="en">JSON and release boundaries</span></h2>
 <div class="panel json">
