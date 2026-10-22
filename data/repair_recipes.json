@@ -1,0 +1,905 @@
+{
+  "schema": "totemops.repair_recipes/1",
+  "recipes": [
+    {
+      "signal": "client_class_on_server",
+      "id": "isolate-client-only-mod-from-server",
+      "title": {
+        "zh-TW": "隔離或移除伺服器端引用的純客戶端模組",
+        "en": "Isolate or remove client-only mod from dedicated server"
+      },
+      "why": {
+        "zh-TW": "伺服器端環境嘗試載入僅存在於客戶端的類別（如渲染、聲音或介面代碼），造成專用伺服器崩潰。",
+        "en": "Dedicated server attempted to load client-only classes such as rendering or GUI code, halting server boot."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "讀取崩潰堆疊行號並比對模組呼叫來源",
+            "en": "Read crash stack line and identify calling mod"
+          },
+          "how": {
+            "zh-TW": "依日誌行號定位 NoClassDefFoundError net.minecraft.client 呼叫者，確認是由哪個模組所觸發",
+            "en": "Locate the NoClassDefFoundError net.minecraft.client caller using log line numbers to determine which mod triggered it"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "查驗該模組之發行元資料與 side 支援性",
+            "en": "Check mod release metadata and side support"
+          },
+          "how": {
+            "zh-TW": "檢視該模組之 toml/json 宣告或官方文件，確認其是否僅標註為客戶端專用模組",
+            "en": "Inspect mod metadata or documentation to verify whether it is declared as client-only"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "從伺服器端目錄移除或隔離純客戶端模組",
+            "en": "Remove or isolate client-only mod from server directory"
+          },
+          "how": {
+            "zh-TW": "在隔離測試目錄中將該純客戶端模組 JAR 移出 mods/，或改用伺服器專用分發",
+            "en": "In an isolated test directory, move the client-only mod JAR out of mods/ or switch to a server build"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "於一次性沙箱重開伺服器進行驗證",
+            "en": "Verify server boot in disposable sandbox"
+          },
+          "how": {
+            "zh-TW": "在拋棄式沙箱環境重跑啟動流程，確認伺服器通過客戶端類別載入階段",
+            "en": "Run server boot in a disposable sandbox to verify startup proceeds past the client class load stage"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "伺服器啟動日誌不再出現 net.minecraft.client 相關之 ClassNotFoundException 或 NoClassDefFoundError",
+          "en": "Server startup log no longer reports ClassNotFoundException or NoClassDefFoundError for net.minecraft.client"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "該缺失類別屬於核心 API 或雙端通用庫而非獨立客戶端模組",
+          "en": "The missing class belongs to a core API or dual-sided library rather than a client-only mod"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要僅在設定檔關閉功能卻將客戶端模組 JAR 留在伺服器 mods/ 目錄（模組載入器仍會掃描類別）",
+          "en": "Do not merely toggle configs while leaving client-only mod JARs inside the server mods/ directory (loader still scans classes)"
+        },
+        {
+          "zh-TW": "不要嘗試藉由修改 JVM 啟動參數（如虛擬顯示變數）來規避客戶端圖形類別載入",
+          "en": "Do not attempt to bypass client GUI class loading by tweaking JVM launch arguments or virtual display flags"
+        }
+      ]
+    },
+    {
+      "signal": "invalid_dedicated_server_dist",
+      "id": "isolate-invalid-dist-mod-from-server",
+      "title": {
+        "zh-TW": "隔離未支援 DEDICATED_SERVER 環境的模組",
+        "en": "Isolate mod unsupported on DEDICATED_SERVER environment"
+      },
+      "why": {
+        "zh-TW": "模組中包含 @OnlyIn(Dist.CLIENT) 標註或僅適用於客戶端發行版的類別，在專用伺服器載入時被環境守衛拒絕。",
+        "en": "Mod contains @OnlyIn(Dist.CLIENT) or client-dist code that was rejected by the dedicated server environment guard."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "讀取日誌 invalid dist 錯誤行號與觸發類別",
+            "en": "Read invalid dist error line and target class from log"
+          },
+          "how": {
+            "zh-TW": "檢視日誌標註之 Attempted to load class for invalid dist 行號，查出引發衝突之模組",
+            "en": "Inspect the log line for Attempted to load class for invalid dist to identify the offending mod"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "核對該模組發行版本是否提供 Dedicated Server 專用版",
+            "en": "Check upstream releases for dedicated server build"
+          },
+          "how": {
+            "zh-TW": "查詢模組官方發行頁面，確認是否有單獨的伺服器版本或設定可關閉客戶端鉤子",
+            "en": "Check upstream release notes to see if a dedicated server build or config toggle exists"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "在測試環境更新或移出不支援伺服器端之模組",
+            "en": "Update or move out unsupported mod in test environment"
+          },
+          "how": {
+            "zh-TW": "在獨立沙箱目錄更新為支援伺服器端之建置版本，或將其自 mods/ 目錄暫時移出",
+            "en": "In an isolated test sandbox, update to a server-compatible build or move the mod out of mods/"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "於一次性沙箱重跑伺服器載入驗證",
+            "en": "Verify server loading in disposable sandbox"
+          },
+          "how": {
+            "zh-TW": "在沙箱重啟伺服器，確認不再觸發 Dist 守衛攔截",
+            "en": "Restart server in sandbox to confirm Dist guard exceptions no longer occur"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "啟動日誌不再出現 invalid dist DEDICATED_SERVER 或 Attempted to load class for invalid dist",
+          "en": "Startup log no longer reports invalid dist DEDICATED_SERVER or Attempted to load class for invalid dist"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "本整合包為純客戶端單人遊戲整合包，不支援專用伺服器部署",
+          "en": "The modpack is intended exclusively for singleplayer client use and does not support dedicated servers"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要僅在設定檔中停用模組卻保留 JAR 於伺服器 mods/ 目錄（Dist 守衛會在載入期直接阻擋）",
+          "en": "Do not merely disable mod options in config while retaining the JAR in server mods/ (Dist guard intercepts during load phase)"
+        },
+        {
+          "zh-TW": "不要嘗試手動解壓 JAR 刪除或修改 @OnlyIn 標註類別以強行載入伺服器",
+          "en": "Do not manually decompress JARs or strip @OnlyIn annotation classes to force loading on dedicated server"
+        }
+      ]
+    },
+    {
+      "signal": "java_runtime_version_mismatch",
+      "id": "align-java-runtime-with-mod-bytecode-version",
+      "title": {
+        "zh-TW": "校準 Java 執行環境版本以符合模組位元組碼要求",
+        "en": "Align Java runtime version with mod bytecode requirements"
+      },
+      "why": {
+        "zh-TW": "模組編譯之 class file version 高於當前執行伺服器的 Java 虛擬機版本（如 class version 65 需 Java 21）。",
+        "en": "Mod class file version is newer than the host JVM version (e.g. class version 65 requires Java 21)."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "讀取 UnsupportedClassVersionError 版本號與當前 Java 版本",
+            "en": "Read class version number from UnsupportedClassVersionError and current Java version"
+          },
+          "how": {
+            "zh-TW": "比對日誌中之 class file version（例如 61 對應 Java 17、65 對應 Java 21），記錄目標 Java 版本",
+            "en": "Extract class file version from log (e.g., 61 corresponds to Java 17, 65 to Java 21) to determine target Java version"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "盤點主機或容器環境中可用之 JDK/JRE 版本",
+            "en": "Inspect available JDK/JRE installations on host or container"
+          },
+          "how": {
+            "zh-TW": "查詢環境中已安裝之 Java 執行檔路徑，確認是否存在相容之 Java 執行環境",
+            "en": "Check available Java binary paths in environment to verify if a compatible runtime is installed"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "調整啟動腳本或容器映像之 Java 執行環境",
+            "en": "Configure startup script or container image to use target Java runtime"
+          },
+          "how": {
+            "zh-TW": "在啟動環境或容器設定中切換 JAVA_HOME 至符合要求之 Java 版本",
+            "en": "Update JAVA_HOME or container image tag in launch configuration to the required Java version"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "於一次性沙箱驗證 Java 版本與伺服器啟動",
+            "en": "Verify Java runtime and server boot in disposable sandbox"
+          },
+          "how": {
+            "zh-TW": "執行 java -version 檢驗，並於沙箱啟動伺服器確認類別可正常解析",
+            "en": "Run java -version and launch server in disposable sandbox to confirm classes load without version errors"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "啟動日誌顯示 Java 執行版本符合模組需求，且無 UnsupportedClassVersionError",
+          "en": "Startup log indicates Java runtime satisfies requirements and no UnsupportedClassVersionError occurs"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "既有模組載入器（如舊版 Forge）不支援新版 Java 執行環境",
+          "en": "Existing mod loader (such as legacy Forge) does not support the newer Java runtime"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要未先查驗模組載入器（Loader）相容性就直接更換啟動腳本中的 Java 大版本",
+          "en": "Do not switch Java major versions in launch scripts without first verifying mod loader compatibility"
+        },
+        {
+          "zh-TW": "不要嘗試使用位元組碼降級工具或 JVM 旗標強行在舊版 JRE 執行高版本 class 檔",
+          "en": "Do not attempt to run higher-version class files on an older JRE using bytecode downgraders or JVM bypass flags"
+        }
+      ]
+    },
+    {
+      "signal": "mixin_injection_failure",
+      "id": "resolve-conflicting-mixin-targets",
+      "title": {
+        "zh-TW": "分析 Mixin 注入失敗原因並排解模組衝突",
+        "en": "Analyze Mixin injection failure and resolve mod conflicts"
+      },
+      "why": {
+        "zh-TW": "多個模組嘗試轉換相同的 Minecraft 位元組碼方法，導致 Mixin 注入目標衝突或簽名不符。",
+        "en": "Multiple mods attempted to transform the same bytecode target, causing Mixin injection failure or signature mismatch."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "從日誌提取注入失敗之 Mixin 配置檔與目標方法",
+            "en": "Extract failing Mixin config and target method from log"
+          },
+          "how": {
+            "zh-TW": "檢視 MixinApplyError 區塊，記錄涉及之 mixin 設定檔名稱、注入器類別與目標 Minecraft 類別",
+            "en": "Inspect MixinApplyError lines to record the mixin config name, injector class, and target Minecraft class"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "比對涉及該目標類別的已安裝模組",
+            "en": "Correlate installed mods targeting the same class"
+          },
+          "how": {
+            "zh-TW": "檢索近期變更或新增之模組，尋找修改同類目標的衝突模組組合",
+            "en": "Review recently added or updated mods to identify conflicting combinations modifying the same target"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "依衝突模組官方相容性公告更新或隔離問題模組",
+            "en": "Update or isolate offending mod per upstream compatibility guidance"
+          },
+          "how": {
+            "zh-TW": "在測試環境中更新相容修正版本，或暫時隔離其中一個衝突模組",
+            "en": "In test environment, update to compatible build or temporarily isolate one conflicting mod"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "於一次性沙箱重跑 Mixin 轉換驗證",
+            "en": "Verify Mixin transformation in disposable sandbox"
+          },
+          "how": {
+            "zh-TW": "啟動測試伺服器確認所有 Mixin 均成功套用且無 Critical injection failure",
+            "en": "Boot test server to verify all Mixin transformers succeed without Critical injection failure"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "日誌中不再出現 MixinApplyError、MixinTransformerError 或 Critical injection failure",
+          "en": "Logs no longer contain MixinApplyError, MixinTransformerError, or Critical injection failure"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "Mixin 失敗源自載入器核心子系統損壞而非個別模組衝突",
+          "en": "The Mixin failure stems from corruption in loader subsystem itself rather than individual mod conflict"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要在缺乏日誌 MixinApplyError 具體證據前同時批次升降級多個模組",
+          "en": "Do not batch upgrade or downgrade multiple mods simultaneously without log evidence identifying the specific failing Mixin config"
+        },
+        {
+          "zh-TW": "不要在未確認注入目標衝突來源前直接移除底層渲染或最佳化相依核心",
+          "en": "Do not remove foundational optimization or library mods before identifying which injector caused the target mismatch"
+        }
+      ]
+    },
+    {
+      "signal": "loader_version_incompatible",
+      "id": "align-loader-and-modpack-target-version",
+      "title": {
+        "zh-TW": "校正模組載入器版本與整合包相容目標",
+        "en": "Align mod loader version with modpack target compatibility"
+      },
+      "why": {
+        "zh-TW": "當前安裝之模組載入器（Loader）版本過舊，或未滿足模組宣告之版本要求範圍。",
+        "en": "Installed mod loader version is outdated or does not satisfy version ranges declared by mods."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "讀取日誌列出之載入器版本與模組要求範圍",
+            "en": "Read loader version and mod constraints from log"
+          },
+          "how": {
+            "zh-TW": "檢視 Incompatible mods found 區塊，記錄各模組要求之載入器最低版本",
+            "en": "Inspect Incompatible mods found block to identify minimum required loader versions"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "核對當前伺服器安裝之核心版本",
+            "en": "Check currently installed server loader build"
+          },
+          "how": {
+            "zh-TW": "檢查啟動核心檔案名稱或 run.sh / user_jvm_args.txt 中定義之載入器版本",
+            "en": "Inspect server startup jar filename or launch scripts to confirm current loader build"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "在測試環境更新載入器核心至相容版本",
+            "en": "Update loader core to compatible version in test environment"
+          },
+          "how": {
+            "zh-TW": "在隔離測試沙箱中使用官方安裝器更新 Forge/NeoForge/Fabric 核心",
+            "en": "Update Forge/NeoForge/Fabric core using official installer in isolated test sandbox"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "於一次性沙箱重開驗證載入器相容性",
+            "en": "Verify loader compatibility in disposable sandbox"
+          },
+          "how": {
+            "zh-TW": "在沙箱重啟伺服器，確認載入器相容性驗證完全通過",
+            "en": "Reboot server in sandbox to confirm loader compatibility checks pass completely"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "啟動日誌不再出現 Incompatible mods found 或 unsupported mod loader 警告",
+          "en": "Startup log no longer reports Incompatible mods found or unsupported mod loader warnings"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "提高載入器版本會導致 Minecraft 遊戲版本不相容",
+          "en": "Increasing loader version breaks compatibility with Minecraft target version"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要跨越 Minecraft 主版本強制升級載入器核心（如從 1.20.1 跨至 1.20.4）",
+          "en": "Do not force-upgrade the loader core across Minecraft minor/major version boundaries (e.g. 1.20.1 to 1.20.4)"
+        },
+        {
+          "zh-TW": "不要直接套用未經相容性驗證的最新實驗版載入器核心",
+          "en": "Do not blindly install bleeding-edge experimental loader builds without verifying modpack target constraints"
+        }
+      ]
+    },
+    {
+      "signal": "missing_class",
+      "id": "complete-dependency-closure-for-missing-class",
+      "title": {
+        "zh-TW": "依日誌所指補齊缺漏之相依類別與依賴閉包",
+        "en": "Complete dependency closure for missing class based on log evidence"
+      },
+      "why": {
+        "zh-TW": "模組在執行時嘗試引用不存在的 Java 類別，通常因為缺少必要相依函式庫或前置模組未安裝。",
+        "en": "A mod attempted to reference a missing Java class at runtime because a required dependency library is absent."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "記錄缺漏之類別全名與呼叫來源模組",
+            "en": "Record missing class name and calling mod"
+          },
+          "how": {
+            "zh-TW": "從 NoClassDefFoundError / ClassNotFoundException 提取完整類別路徑與調用堆疊",
+            "en": "Extract fully qualified class name and calling stack from NoClassDefFoundError / ClassNotFoundException"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "比對模組宣告之依賴項，補齊依賴閉包且版本以日誌為準",
+            "en": "Match declared mod dependencies to complete dependency closure based on log"
+          },
+          "how": {
+            "zh-TW": "檢視呼叫來源模組的 mods.toml 或 fabric.mod.json，依日誌與宣告補齊依賴閉包，版本以日誌為準（不要猜測 slug）",
+            "en": "Inspect calling mod metadata to complete dependency closure strictly based on log evidence and declared versions without guessing slugs"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "在測試沙箱補齊缺漏之相依 JAR",
+            "en": "Place required dependency JAR in test sandbox"
+          },
+          "how": {
+            "zh-TW": "在獨立沙箱的 mods/ 目錄中放置符合相容版本之依賴檔案",
+            "en": "Place verified compatible dependency JAR into the sandbox mods/ directory"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "於一次性沙箱重跑驗證類別載入",
+            "en": "Verify class loading in disposable sandbox"
+          },
+          "how": {
+            "zh-TW": "在沙箱重啟伺服器，驗證該缺失類別可被成功解析載入",
+            "en": "Reboot server in sandbox to verify the previously missing class resolves cleanly"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "啟動日誌不再出現該類別之 NoClassDefFoundError 或 ClassNotFoundException",
+          "en": "Startup log no longer reports NoClassDefFoundError or ClassNotFoundException for that class"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "缺失類別屬於 JRE 內建模組或已被移除之舊版標準庫 API",
+          "en": "The missing class belongs to internal JRE modules or deprecated standard APIs"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要憑檔名或印象猜測依賴名稱，必須依據堆疊中的完整類別路徑查驗依賴閉包",
+          "en": "Do not guess dependency names or slugs from memory; verify the exact dependency closure using the full class path in the stack trace"
+        },
+        {
+          "zh-TW": "不要嘗試將現有模組全部無差別升級到最新發行版以解決單一類別缺漏",
+          "en": "Do not indiscriminately upgrade all installed mods to their latest releases to resolve a single missing class"
+        }
+      ]
+    },
+    {
+      "signal": "dependency_load_failure",
+      "id": "fulfill-mandatory-mod-dependencies-from-log",
+      "title": {
+        "zh-TW": "依日誌明確指引補齊缺漏之必要前置模組",
+        "en": "Fulfill mandatory mod dependencies strictly indicated by log"
+      },
+      "why": {
+        "zh-TW": "模組載入器在早期驗證階段發現缺少必要前置模組（mandatory dependencies）或版本不符合要求。",
+        "en": "Mod loader detected missing mandatory dependencies or version mismatches during early dependency check."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "讀取日誌列出之缺漏模組清單與要求版本範圍",
+            "en": "Read missing dependencies list and requested version ranges from log"
+          },
+          "how": {
+            "zh-TW": "從 Missing mandatory dependencies 區塊中提取缺漏之 Mod ID 與版本條件，補齊依賴閉包，版本以日誌為準（不要猜測 slug）",
+            "en": "Parse missing Mod ID and version constraints from log to complete dependency closure strictly based on log without guessing slugs"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "檢查 mods 目錄確認是否已存在但不相容之版本",
+            "en": "Check mods directory for incompatible existing versions"
+          },
+          "how": {
+            "zh-TW": "盤點本地 mods/ 目錄，確認該依賴是完全缺失還是現有版本不符要求",
+            "en": "Inspect local mods/ directory to confirm whether dependency is missing or installed version is out of range"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "在隔離測試環境補齊相容之必要前置模組",
+            "en": "Install compatible mandatory dependency in isolated test environment"
+          },
+          "how": {
+            "zh-TW": "在沙箱測試目錄中補齊符合日誌所列版本範圍的前置模組 JAR",
+            "en": "Place required dependency JAR matching log-specified range into test sandbox"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "驗證載入器依賴圖滿足且無衝突",
+            "en": "Verify dependency graph resolves without conflict"
+          },
+          "how": {
+            "zh-TW": "在一次性沙箱重啟伺服器確認所有必要相依均已滿足",
+            "en": "Reboot server in disposable sandbox to verify all mandatory dependencies are fulfilled"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "啟動日誌不再出現 Missing mandatory dependencies 警告",
+          "en": "Startup log no longer reports Missing mandatory dependencies warnings"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "兩個必要模組互相要求互斥的依賴版本範圍（依賴死結）",
+          "en": "Two required mods demand mutually exclusive dependency version ranges (dependency deadlock)"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要忽視日誌標示的嚴格版本範圍約束而直接下載最新發布版依賴",
+          "en": "Do not disregard the strict version range constraints specified in the log by downloading unverified latest dependency releases"
+        },
+        {
+          "zh-TW": "不要憑直覺猜測前置模組 slug 或下載不同模組載入器專用的依賴檔案",
+          "en": "Do not guess dependency slugs or download dependency files built for a different mod loader"
+        }
+      ]
+    },
+    {
+      "signal": "out_of_memory",
+      "id": "raise-heap-within-host-budget",
+      "title": {
+        "zh-TW": "提高記憶體上限，但先量測主機餘裕",
+        "en": "Raise the heap only after measuring host headroom"
+      },
+      "why": {
+        "zh-TW": "Java 虛擬機堆積記憶體（Heap Space）耗盡，導致伺服器崩潰或無法完成啟動。",
+        "en": "The Java virtual machine exhausted its allocated heap space, causing a crash or incomplete startup."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "讀取當前 JVM 參數與主機實體記憶體餘裕",
+            "en": "Read current JVM parameters and host memory headroom"
+          },
+          "how": {
+            "zh-TW": "檢查啟動參數中之 -Xmx 設定，並以系統指令確認主機可用實體記憶體",
+            "en": "Inspect current -Xmx launch setting and check available host physical memory via system commands"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "計算合宜之堆積記憶體上限",
+            "en": "Calculate safe heap upper bound"
+          },
+          "how": {
+            "zh-TW": "在主機實體記憶體安全預算內（保留作業系統所需空間）規劃新的 -Xmx 數值",
+            "en": "Plan a new -Xmx allocation that leaves sufficient headroom for host operating system"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "於設定檔調整 -Xmx 堆積記憶體分配",
+            "en": "Adjust -Xmx allocation in configuration"
+          },
+          "how": {
+            "zh-TW": "在 user_jvm_args.txt 或啟動腳本中適度提高 -Xmx 參數",
+            "en": "Increase -Xmx parameter in user_jvm_args.txt or launch script within measured host limits"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "監測沙箱啟動峰值記憶體",
+            "en": "Monitor peak memory usage in sandbox startup"
+          },
+          "how": {
+            "zh-TW": "於一次性測試沙箱啟動伺服器並觀測記憶體使用趨勢與 GC 表現",
+            "en": "Boot in disposable test sandbox and observe heap usage curve and GC behavior"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "伺服器啟動過程無 OutOfMemoryError 或 Java heap space 錯誤",
+          "en": "Server starts without OutOfMemoryError or Java heap space errors"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "主機剩餘可用實體記憶體不足以支撐更高的堆積配置",
+          "en": "Host available physical memory is insufficient to safely support higher heap allocation"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要在未量測主機實體記憶體可用餘裕前直接將 -Xmx 翻倍或設為全主機記憶體",
+          "en": "Do not double -Xmx or allocate total host physical RAM before measuring available host memory headroom"
+        },
+        {
+          "zh-TW": "不要將記憶體耗盡誤判為模組邏輯衝突而隨意停用或移除功能模組",
+          "en": "Do not mistake memory exhaustion for mod conflicts by arbitrarily disabling functional mods"
+        }
+      ]
+    },
+    {
+      "signal": "mod_exception",
+      "id": "isolate-faulty-mod-from-exception-trace",
+      "title": {
+        "zh-TW": "分析模組異常堆疊並隔離出錯模組",
+        "en": "Analyze mod exception stack trace and isolate faulty mod"
+      },
+      "why": {
+        "zh-TW": "特定模組在生命週期階段（如 setup / load / registry）拋出未捕獲之異常，終止伺服器初始化。",
+        "en": "A specific mod threw an unhandled exception during its lifecycle phase, halting server initialization."
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": {
+            "zh-TW": "從日誌中標註出錯之 Mod ID 與異常堆疊",
+            "en": "Identify faulty Mod ID and exception stack from log"
+          },
+          "how": {
+            "zh-TW": "檢索 Mod encountered an error 訊息，記錄出錯模組名稱與異常類別",
+            "en": "Locate the Mod encountered an error line and identify offending mod ID and exception type"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 2,
+          "action": {
+            "zh-TW": "檢查該模組之配置檔與相容性記錄",
+            "en": "Check mod configuration and compatibility notes"
+          },
+          "how": {
+            "zh-TW": "檢視該模組 config/ 設定檔是否有語法錯誤，並查閱該版本已知 Issue",
+            "en": "Review mod config file syntax and consult upstream issue tracker for known version defects"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        },
+        {
+          "order": 3,
+          "action": {
+            "zh-TW": "在測試環境嘗試還原預設設定或隔離該模組",
+            "en": "Reset config to default or isolate mod in test sandbox"
+          },
+          "how": {
+            "zh-TW": "在隔離測試沙箱中備份後重設設定檔，若仍異常則暫時移出該模組進行比對",
+            "en": "In test sandbox, back up and reset config; if errors persist, isolate mod JAR for comparison"
+          },
+          "risk": "medium",
+          "requires_confirmation": true,
+          "may_change_files": true
+        },
+        {
+          "order": 4,
+          "action": {
+            "zh-TW": "於沙箱環境重跑生命週期載入",
+            "en": "Verify lifecycle loading in sandbox"
+          },
+          "how": {
+            "zh-TW": "在一次性沙箱重啟伺服器確認生命週期初始化順利完成",
+            "en": "Restart server in disposable sandbox to confirm lifecycle initialization completes"
+          },
+          "risk": "low",
+          "requires_confirmation": false,
+          "may_change_files": false
+        }
+      ],
+      "verify": [
+        {
+          "zh-TW": "啟動日誌不再出現 Mod encountered an error 或 Failed to load mod 紀錄",
+          "en": "Startup log no longer contains Mod encountered an error or Failed to load mod records"
+        }
+      ],
+      "stop_if": [
+        {
+          "zh-TW": "異常是由全域資料庫、存檔損壞或硬體磁碟錯誤引起而非模組本身缺陷",
+          "en": "The exception is caused by global database, world file corruption, or disk errors rather than mod defects"
+        }
+      ],
+      "do_not": [
+        {
+          "zh-TW": "不要刪除或改寫正式世界的 world/ 目錄",
+          "en": "Do not delete or overwrite the production world/ directory"
+        },
+        {
+          "zh-TW": "不要一次停用全部模組（bulk disable）",
+          "en": "Do not bulk-disable all mods at once"
+        },
+        {
+          "zh-TW": "不要僅憑單一異常堆疊的頂層類別就斷定是該模組程式缺陷並直接將其刪除",
+          "en": "Do not blame and delete a mod solely based on the top class in a single exception trace without reproducing in isolation"
+        },
+        {
+          "zh-TW": "不要在沒有備份原設定的情況下直接刪除或覆寫該模組的 config/ 設定檔",
+          "en": "Do not delete or overwrite mod config/ files in-place without backing up the original settings"
+        }
+      ]
+    }
+  ]
+}

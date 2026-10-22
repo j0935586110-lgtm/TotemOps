@@ -19,6 +19,7 @@ from pathlib import Path
 
 from mc_oss_bridge import doctor, plan, status
 from mc_package_inspector import InputBlocked, inspect_log, inspect_path
+from totem_repair_recipes import build_fixplan, format_human_plan
 
 
 def _get_git_branch() -> str:
@@ -661,6 +662,18 @@ def main(argv=None) -> int:
     sub.add_parser("doctor")
     for cmd in ("inspect", "diagnose"):
         sub.add_parser(cmd).add_argument("path")
+    fp = sub.add_parser(
+        "fixplan",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Exit codes:
+  0 = Unused (fixplan never represents a verified fix)
+  2 = BLOCK (safety gate blocked, invalid argument, or broken catalog)
+  3 = PLAN_ONLY, NO_RECIPE, or REVIEW_REQUIRED (no actions executed)
+""",
+    )
+    fp.add_argument("path")
+    fp.add_argument("--json", action="store_true", help="Emit JSON output for agents")
     s = sub.add_parser("status")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=25565)
@@ -723,6 +736,8 @@ Exit codes:
             result = summarize_package(Path(args.path))
         elif args.command == "diagnose":
             result = diagnose(Path(args.path))
+        elif args.command == "fixplan":
+            result = build_fixplan(Path(args.path))
         elif args.command == "status":
             result = status(args.host, args.port)
         elif args.command == "plan":
@@ -755,7 +770,10 @@ Exit codes:
 
     require_verified = getattr(args, "require_verified", False)
     is_solve_and_verify = (getattr(args, "command", None) == "solve-and-verify")
-    exit_code = compute_exit_code(result, require_verified=require_verified, is_solve_and_verify=is_solve_and_verify)
+    if getattr(args, "command", None) == "fixplan":
+        exit_code = 2 if (result.get("status") == "BLOCK" or result.get("code") == "BLOCK") else 3
+    else:
+        exit_code = compute_exit_code(result, require_verified=require_verified, is_solve_and_verify=is_solve_and_verify)
 
     receipt_out_arg = getattr(args, "receipt_out", None)
     if receipt_out_arg and result.get("reason") != "receipt_path_rejected":
@@ -764,6 +782,10 @@ Exit codes:
         except ValueError:
             result = {"status": "BLOCK", "reason": "receipt_path_rejected"}
             exit_code = compute_exit_code(result, require_verified=require_verified, is_solve_and_verify=is_solve_and_verify)
+
+    if getattr(args, "command", None) == "fixplan" and not getattr(args, "json", False):
+        print(format_human_plan(result))
+        return exit_code
 
     print(json.dumps(result, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
     return exit_code
