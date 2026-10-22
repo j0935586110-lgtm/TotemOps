@@ -3,6 +3,21 @@
   "use strict";
   const LIMIT_BYTES = 64 * 1024 * 1024;
   const CHUNK_BYTES = 512 * 1024;
+
+  // UI copy is looked up by stable key; the Chinese text in RULES/errors below stays
+  // as the engine's own wording (CLI parity + tests), so a missing key never blanks a page.
+  function tr(key, vars, fallback) {
+    const translate = root.TOTEM_TRANSLATE;
+    const template = typeof translate === "function" ? translate(key) : "";
+    if (!template) return fallback;
+    return template.replace(/\{(\w+)\}/g, (match, name) =>
+      vars && Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match);
+  }
+
+  function formatNumber(value) {
+    const locale = root.TOTEM_LANGUAGE === "en" ? "en-US" : "zh-TW";
+    try { return Number(value).toLocaleString(locale); } catch (_) { return String(value); }
+  }
   const RULES = [
     {
       id: "dependency",
@@ -128,7 +143,7 @@
           pendingCR = false;
         }
         scanLine(pending);
-        if (!hasText) return { status: "empty", error: "請貼上或選擇一份 Minecraft 錯誤日誌。" };
+        if (!hasText) return { status: "empty", errorCode: "diag.errorEmpty", error: "請貼上或選擇一份 Minecraft 錯誤日誌。" };
         const findings = matches.filter((entry) => entry.count).map((entry) => ({
           id: entry.rule.id,
           code: entry.rule.code,
@@ -145,6 +160,7 @@
           findings,
           lineCount,
           limited: false,
+          messageCode: findings.length ? "diag.resultMessageFound" : "diag.resultMessageNone",
           message: findings.length
             ? "找到可能的故障線索；不是已驗證的根因，也沒有修改任何伺服器檔案。"
             : "未命中目前已知規則；這不代表日誌正常或伺服器沒有問題。"
@@ -154,11 +170,11 @@
   }
 
   function tooLarge() {
-    return { status: "too_large", error: "日誌超過 64 MiB，請改用本機 CLI 分析。" };
+    return { status: "too_large", errorCode: "diag.errorTooLarge", error: "日誌超過 64 MiB，請改用本機 CLI 分析。" };
   }
 
   function analyzeLog(input) {
-    if (typeof input !== "string") return { status: "invalid", error: "需要文字格式的日誌。" };
+    if (typeof input !== "string") return { status: "invalid", errorCode: "diag.errorInvalid", error: "需要文字格式的日誌。" };
     if (new TextEncoder().encode(input).length > LIMIT_BYTES) return tooLarge();
     const analyzer = createAnalyzer();
     analyzer.pushChunk(input);
@@ -167,7 +183,7 @@
 
   async function analyzeFile(file, onProgress, chunkBytes = CHUNK_BYTES) {
     if (!file || !Number.isSafeInteger(file.size) || typeof file.slice !== "function") {
-      return { status: "invalid", error: "無法讀取選取的日誌檔案。" };
+      return { status: "invalid", errorCode: "diag.errorFileUnreadable", error: "無法讀取選取的日誌檔案。" };
     }
     if (file.size > LIMIT_BYTES) return tooLarge();
     const size = Number.isSafeInteger(chunkBytes) && chunkBytes > 0
@@ -257,29 +273,62 @@
     if (className) element.className = className;
     return element;
   }
+  let lastOut = null;
+  let view = "placeholder";
+  let feedbackState = null;
+
+  function setFeedback(key, vars, fallback) {
+    feedbackState = key ? { key, vars, fallback } : null;
+    showFeedback(key ? tr(key, vars, fallback) : "");
+  }
+
+  function renderIdleHint() {
+    clearChildren(result);
+    lastOut = null;
+    view = "hint";
+    result.appendChild(node("p", tr("diag.resultIdleHint", null, "請選範例或貼入錯誤日誌，再按「開始分析」。"), "result-info"));
+    status.textContent = tr("diag.statusIdle", null, "待分析");
+    character.textContent = "·";
+  }
+
+  function renderPlaceholder() {
+    clearChildren(result);
+    lastOut = null;
+    view = "placeholder";
+    const placeholder = node("p", tr("diag.resultPlaceholder", null, "選擇或拖入 latest.log，診斷結果會顯示在這裡。"), "result-info");
+    placeholder.setAttribute("data-i18n", "diag.resultPlaceholder");
+    result.appendChild(placeholder);
+  }
+
   function render(out) {
     clearChildren(result);
+    lastOut = out;
+    view = "result";
     if (out.error) {
-      result.appendChild(node("p", out.error, "result-error"));
-      status.textContent = "未分析";
+      result.appendChild(node("p", tr(out.errorCode, null, out.error), "result-error"));
+      status.textContent = tr("diag.statusUnanalyzed", null, "未分析");
       character.textContent = "!";
       return;
     }
-    status.textContent = out.findings.length ? "發現 " + out.findings.length + " 類線索" : "未找到已知線索";
-    character.textContent = out.findings.length ? "?" : "·";
-    result.appendChild(node("p", out.message, "result-info"));
-    result.appendChild(node("p", out.lineCount.toLocaleString("zh-TW") + " 行已在本機掃描，沒有上傳或儲存。", "result-meta"));
-    if (!out.findings.length) return;
+    const hasFindings = out.findings.length > 0;
+    status.textContent = hasFindings
+      ? tr("diag.statusFindings", { n: out.findings.length }, "發現 " + out.findings.length + " 類線索")
+      : tr("diag.statusNone", null, "未找到已知線索");
+    character.textContent = hasFindings ? "?" : "·";
+    result.appendChild(node("p", tr(out.messageCode, null, out.message), "result-info"));
+    const scannedFallback = formatNumber(out.lineCount) + " 行已在本機掃描，沒有上傳或儲存。";
+    result.appendChild(node("p", tr("diag.resultScanned", { count: formatNumber(out.lineCount) }, scannedFallback), "result-meta"));
+    if (!hasFindings) return;
     for (const f of out.findings) {
       const card = node("article", null, "finding");
       const header = node("div", null, "finding-head");
-      header.appendChild(node("strong", f.name));
+      header.appendChild(node("strong", tr("diag.rule." + f.code + ".title", null, f.name)));
       header.appendChild(node("span", f.code, "finding-code"));
       card.appendChild(header);
-      card.appendChild(node("p", f.detail, "finding-detail"));
-      card.appendChild(node("p", "規則比對命中 " + f.matches + " 行 · 僅供初步診斷", "result-meta"));
+      card.appendChild(node("p", tr("diag.rule." + f.code + ".detail", null, f.detail), "finding-detail"));
+      card.appendChild(node("p", tr("diag.resultMatches", { n: f.matches }, "規則比對命中 " + f.matches + " 行 · 僅供初步診斷"), "result-meta"));
       const details = node("details");
-      details.appendChild(node("summary", "查看對應日誌行號與內容"));
+      details.appendChild(node("summary", tr("diag.evidenceSummary", null, "查看對應日誌行號與內容")));
       const list = node("ol", null, "evidence-list");
       for (const ev of f.evidence) {
         const item = node("li");
@@ -292,11 +341,12 @@
       result.appendChild(card);
     }
   }
+
   function setSample(key) {
     const sample = samples[key];
     if (!sample) return;
     stopAnalysis();
-    showFeedback("");
+    setFeedback(null);
     activeSample = key;
     input.value = sample.log;
     document.querySelectorAll("[data-sample]").forEach((btn) => {
@@ -315,58 +365,59 @@
   });
   el("clear-button").addEventListener("click", () => {
     stopAnalysis();
-    showFeedback("");
+    setFeedback(null);
     activeSample = "";
     input.value = "";
     document.querySelectorAll("[data-sample]").forEach((b) => b.setAttribute("aria-pressed", "false"));
-    clearChildren(result);
-    result.appendChild(node("p", "請選範例或貼入錯誤日誌，再按「開始分析」。", "result-info"));
-    status.textContent = "待分析";
-    character.textContent = "·";
+    renderIdleHint();
     file.value = "";
   });
   async function readFile(selected) {
     if (!selected) return;
     stopAnalysis();
     const currentRun = runId;
-    const fileName = String(selected.name || "未命名檔案").slice(0, 120);
+    const fileName = String(selected.name || tr("diag.untitledFile", null, "未命名檔案")).slice(0, 120);
     if (!/\.(log|txt)$/i.test(fileName) && selected.type !== "text/plain") {
       const error = "目前只支援 .log 或 .txt 文字日誌；模組 ZIP/JAR 請使用 TotemOps CLI 檢查。";
-      showFeedback(fileName + "：" + error);
-      render({ error });
+      setFeedback("diag.errorUnsupported", null, fileName + "：" + error);
+      render({ errorCode: "diag.errorUnsupported", error });
       showResultOnSmallScreen();
       return;
     }
     if (selected.size > LIMIT_BYTES) {
-      showFeedback(fileName + " 超過 64 MiB，未開始分析。");
+      setFeedback("diag.feedbackTooLarge", { name: fileName }, fileName + " 超過 64 MiB，未開始分析。");
       render(tooLarge());
       showResultOnSmallScreen();
       return;
     }
-    showFeedback("已選擇：" + fileName + "（" + (selected.size / 1048576).toFixed(1) + " MiB），正在本機分析…");
+    setFeedback("diag.feedbackReading", { name: fileName, size: (selected.size / 1048576).toFixed(1) },
+      "已選擇：" + fileName + "（" + (selected.size / 1048576).toFixed(1) + " MiB），正在本機分析…");
     input.value = "";
     activeSample = "";
     document.querySelectorAll("[data-sample]").forEach((b) => b.setAttribute("aria-pressed", "false"));
     clearChildren(result);
-    result.appendChild(node("p", "正在本機分析日誌，檔案不會上傳。", "result-info"));
-    status.textContent = "分析中 0%";
+    lastOut = null;
+    view = "result";
+    result.appendChild(node("p", tr("diag.feedbackAnalyzing", null, "正在本機分析日誌，檔案不會上傳。"), "result-info"));
+    status.textContent = tr("diag.statusAnalyzing", { percent: 0 }, "分析中 0%");
 
     function progress(done, total) {
       if (currentRun !== runId) return;
-      status.textContent = "分析中 " + Math.round(done * 100 / Math.max(total, 1)) + "%";
+      const percent = Math.round(done * 100 / Math.max(total, 1));
+      status.textContent = tr("diag.statusAnalyzing", { percent }, "分析中 " + percent + "%");
     }
     async function fallback() {
       try {
         const out = await analyzeFile(selected, progress);
         if (currentRun === runId) {
           render(out);
-          showFeedback("分析完成：" + fileName + "；檔案沒有上傳。");
+          setFeedback("diag.feedbackDone", { name: fileName }, "分析完成：" + fileName + "；檔案沒有上傳。");
           showResultOnSmallScreen();
         }
       } catch (error) {
         if (currentRun === runId) {
-          render({ error: "本機分析失敗，請使用較新的瀏覽器或本機 CLI。" });
-          showFeedback(fileName + " 分析失敗，請再試一次。");
+          render({ errorCode: "diag.errorAnalyzeFailedBrowser", error: "本機分析失敗，請使用較新的瀏覽器或本機 CLI。" });
+          setFeedback("diag.feedbackFailed", { name: fileName }, fileName + " 分析失敗，請再試一次。");
           showResultOnSmallScreen();
         }
       }
@@ -385,10 +436,9 @@
         if (data.type === "result" || data.type === "error") {
           activeWorker = null;
           instance.terminate();
-          render(data.type === "result" ? data.result : { error: "本機分析失敗，請再試一次。" });
-          showFeedback(data.type === "result"
-            ? "分析完成：" + fileName + "；檔案沒有上傳。"
-            : fileName + " 分析失敗，請再試一次。");
+          render(data.type === "result" ? data.result : { errorCode: "diag.errorAnalyzeFailed", error: "本機分析失敗，請再試一次。" });
+          if (data.type === "result") setFeedback("diag.feedbackDone", { name: fileName }, "分析完成：" + fileName + "；檔案沒有上傳。");
+          else setFeedback("diag.feedbackFailed", { name: fileName }, fileName + " 分析失敗，請再試一次。");
           showResultOnSmallScreen();
         }
       };
@@ -436,12 +486,12 @@
     if (drop.scrollIntoView) drop.scrollIntoView({ behavior: "smooth", block: "center" });
   });
   if (document.querySelector("[data-sample]")) setSample(activeSample);
-  else {
-    clearChildren(result);
-    var placeholderText = (window.TOTEM_TRANSLATE && window.TOTEM_TRANSLATE("diag.resultPlaceholder")) ||
-      "選擇或拖入 latest.log，診斷結果會顯示在這裡。";
-    var placeholder = node("p", placeholderText, "result-info");
-    placeholder.setAttribute("data-i18n", "diag.resultPlaceholder");
-    result.appendChild(placeholder);
-  }
+  else renderPlaceholder();
+
+  document.addEventListener("totem:language", function () {
+    if (view === "result" && lastOut) render(lastOut);
+    else if (view === "hint") renderIdleHint();
+    else renderPlaceholder();
+    if (feedbackState) showFeedback(tr(feedbackState.key, feedbackState.vars, feedbackState.fallback));
+  });
 })(typeof globalThis === "object" ? globalThis : this);
