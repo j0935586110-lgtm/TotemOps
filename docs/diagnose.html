@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; worker-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
   <meta name="theme-color" content="#081520">
   <meta name="description" content="免費 Minecraft 伺服器日誌初步診斷：在你的瀏覽器本機分析 latest.log、模組依賴、Java、Mixin 與記憶體錯誤。免註冊、不上傳檔案、不使用 AI API。">
   <link rel="canonical" href="https://j0935586110-lgtm.github.io/TotemOps/diagnose.html">
@@ -14,6 +14,7 @@
   <meta property="og:image" content="https://j0935586110-lgtm.github.io/TotemOps/assets/totemops-social.png">
   <title>Minecraft 錯誤日誌免費分析｜不死圖騰 TotemOps</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site-header.css">
   <style>
     :root {color-scheme:dark;--bg:#07151c;--card:#0f2630;--card2:#102d35;--ink:#e9f6f0;--muted:#a3bdba;--accent:#91f5b3;--accent2:#66d6eb;--line:#31505a;--amber:#ffd889}
     *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:radial-gradient(ellipse at 80% 4%,#20443a 0,transparent 35%),radial-gradient(ellipse at 4% 15%,#153645 0,transparent 35%),var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
@@ -21,15 +22,10 @@
     a{color:var(--accent2)} a:hover{color:#c0ffdc} button,textarea{font:inherit} button{cursor:pointer}
     button:focus-visible,textarea:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent2);outline-offset:4px}
     .wrap{max-width:1150px;width:calc(100% - 40px);margin:auto}
-    .topbar{border-bottom:1px solid #ffffff22;background:#07151bdc;backdrop-filter:blur(16px);position:sticky;top:0;z-index:4}
-    .topinner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:15px}
-    .brand{font-weight:900;color:var(--ink);text-decoration:none;letter-spacing:-.035em;font-size:1.2rem;display:flex;align-items:center;gap:10px}
-    .brandicon{display:grid;place-items:center;width:36px;height:36px;border:2px solid #9cffba;background:#1a4938;border-radius:9px;color:#d9ffe3}
-    .back{font-weight:750;text-decoration:none;color:#b5d7d2;font-size:.92rem}
     .hero{display:grid;grid-template-columns:1.5fr .55fr;align-items:center;gap:12px;padding:65px 0 47px}
     .eyebrow{color:var(--accent);font-size:.82rem;font-weight:900;text-transform:uppercase;letter-spacing:.18em}
     h1{font-weight:900;line-height:1.14;font-size:clamp(2.25rem,5vw,4rem);letter-spacing:-.055em;margin:12px 0 20px}
-    h1 span{background:linear-gradient(90deg,#b9ff9e,#54dada);background-clip:text;color:transparent}
+    h1 .accent{background:linear-gradient(90deg,#b9ff9e,#54dada);background-clip:text;color:transparent}
     .lead{font-size:1.1rem;max-width:680px;color:#c6ded9;margin:0 0 23px}
     .proof-tags{display:flex;flex-wrap:wrap;gap:9px}
     .proof-tags span{border:1px solid #45685f;color:#d0e5dc;background:#17342f;border-radius:100px;padding:5px 12px;font-size:.82rem;font-weight:700}
@@ -99,95 +95,108 @@
   </style>
   <script src="assets/diagnose.js" defer></script>
   <script src="assets/folder-diagnose.js" defer></script>
+  <script src="assets/site-i18n.js" defer></script>
+  <script src="assets/site-header.js" defer></script>
 </head>
-<body>
-  <header class="topbar">
-    <div class="wrap topinner">
-      <a class="brand" href="index.html"><span class="brandicon" aria-hidden="true">✦</span>不死圖騰 <span style="color:#83e7b2">TotemOps</span></a>
-      <a class="back" href="index.html">← 返回首頁</a>
+<body data-page="diag">
+  <header class="totem-header">
+    <div class="totem-header-wrap totem-header-inside">
+      <a href="index.html" class="totem-brand"><span class="totem-brand-mark" aria-hidden="true">✦</span><span>TotemOps <span class="totem-brand-sub">不死圖騰</span></span></a>
+      <nav class="totem-nav" aria-label="Site navigation / 網站導覽">
+        <a href="index.html" data-i18n="home">首頁</a>
+        <a href="diagnose.html" aria-current="page" data-i18n="navTry">免費分析日誌</a>
+        <a href="index.html#pain" data-i18n="navPain">解決什麼</a>
+        <a href="index.html#how" data-i18n="navHow">怎麼運作</a>
+        <a href="index.html#status" data-i18n="navStatus">做到哪裡</a>
+        <a href="index.html#start" data-i18n="navStart">開始使用</a>
+      </nav>
+      <div class="totem-language" role="group" aria-label="Language / 語言">
+        <button type="button" data-select-language="zh" aria-pressed="true" lang="zh-Hant" aria-label="切換繁體中文">中文</button>
+        <button type="button" data-select-language="en" aria-pressed="false" lang="en" aria-label="Switch to English">English</button>
+      </div>
     </div>
   </header>
   <main>
     <div class="wrap">
       <section class="hero" aria-labelledby="title">
         <div>
-          <p class="eyebrow">FREE LOCAL CRASH TRIAGE · 開源免費</p>
-          <h1 id="title">Minecraft 出錯了？<br><span>讓圖騰找出線索。</span></h1>
-          <p class="lead">貼上或拖入伺服器的 <code>latest.log</code>，立即檢查可能的相依模組、Java、Mixin、記憶體等問題。先看證據，再決定怎麼修。</p>
-          <div class="proof-tags"><span>不需登入</span><span>不上傳日誌</span><span>不消耗 AI Token</span><span>零安裝</span></div>
+          <p class="eyebrow" data-i18n="eyebrow">FREE LOCAL CRASH TRIAGE · 開源免費</p>
+          <h1 id="title"><span data-i18n="headline">Minecraft 出錯了？</span><br><span class="accent" data-i18n="headlineAccent">讓圖騰找出線索。</span></h1>
+          <p class="lead" data-i18n-html="lead">貼上或拖入伺服器的 <code>latest.log</code>，立即檢查可能的相依模組、Java、Mixin、記憶體等問題。先看證據，再決定怎麼修。</p>
+          <div class="proof-tags"><span data-i18n="tagNoLogin">不需登入</span><span data-i18n="tagNoUpload">不上傳日誌</span><span data-i18n="tagNoTokens">不消耗 AI Token</span><span data-i18n="tagNoInstall">零安裝</span></div>
         </div>
         <div class="mascot" aria-hidden="true"><span id="totem-face" hidden></span><span class="aura"></span><span class="eyes"><i></i><i></i></span></div>
       </section>
       <div class="panels">
         <section class="panel" aria-labelledby="input-title">
           <div class="panelheader">
-            <h2 id="input-title">01 / 給圖騰一條線索</h2>
-            <p>先點範例試玩，或讀取你自己的錯誤日誌。</p>
+            <h2 id="input-title" data-i18n="inputTitle">01 / 給圖騰一條線索</h2>
+            <p data-i18n="inputLead">先點範例試玩，或讀取你自己的錯誤日誌。</p>
           </div>
           <div class="panelbody">
-            <div class="sample-label">試玩範例（日誌為示意資料）</div>
-            <div class="chips" role="group" aria-label="選擇範例">
-              <button type="button" data-sample="missing" aria-pressed="true">缺少前置模組</button>
-              <button type="button" data-sample="mixin" aria-pressed="false">Mixin 衝突</button>
-              <button type="button" data-sample="memory" aria-pressed="false">記憶體不足</button>
-              <button type="button" data-sample="clean" aria-pressed="false">無規則命中</button>
+            <div class="sample-label" data-i18n="sampleLabel">試玩範例（日誌為示意資料）</div>
+            <div class="chips" role="group" aria-label="選擇範例" data-i18n-label="sampleGroup">
+              <button type="button" data-sample="missing" aria-pressed="true" data-i18n="sampleMissing">缺少前置模組</button>
+              <button type="button" data-sample="mixin" aria-pressed="false" data-i18n="sampleMixin">Mixin 衝突</button>
+              <button type="button" data-sample="memory" aria-pressed="false" data-i18n="sampleMemory">記憶體不足</button>
+              <button type="button" data-sample="clean" aria-pressed="false" data-i18n="sampleClean">無規則命中</button>
             </div>
             <div class="drop" id="dropzone">
-              <strong>將 latest.log 拖曳到這裡</strong>
-              <p>只在瀏覽器記憶體中讀取，檔案大小上限 64 MiB，分段在本機分析</p>
-              <label for="log-file" class="file-label">或選擇本機文字檔</label>
-              <input type="file" id="log-file" accept=".log,.txt,text/plain" aria-label="讀取本機 Minecraft 錯誤日誌">
+              <strong data-i18n="dropTitle">將 latest.log 拖曳到這裡</strong>
+              <p data-i18n="dropHint">只在瀏覽器記憶體中讀取，檔案大小上限 64 MiB，分段在本機分析</p>
+              <label for="log-file" class="file-label" data-i18n="dropChoose">或選擇本機文字檔</label>
+              <input type="file" id="log-file" accept=".log,.txt,text/plain" aria-label="讀取本機 Minecraft 錯誤日誌" data-i18n-label="fileInputLabel">
             </div>
             <p class="field-note" id="file-feedback" role="status" aria-live="polite"></p>
             <div class="folder-panel" aria-labelledby="folder-title">
-              <h3 id="folder-title">進階：排查整個 .minecraft 資料夾</h3>
-              <p>資料夾可達 1.5 GB：先索引檔案名稱，選讀最多 4 份日誌、350 個模組 JAR 描述檔、24 個世界 NBT、40 份設定檔（JSON／JSON5／TOML）、20 個 .mca 區域檔（每檔最多 4 個區塊抽查）。設有單檔大小、解壓及 180 秒中止保護；不讀 playerdata、帳號檔，不顯示內容值、不上傳，也不修改遊戲。</p>
-              <label for="folder-file">選擇 .minecraft 資料夾</label>
+              <h3 id="folder-title" data-i18n="folderTitle">進階：排查整個 .minecraft 資料夾</h3>
+              <p data-i18n="folderHint">資料夾可達 1.5 GB：先索引檔案名稱，選讀最多 4 份日誌、350 個模組 JAR 描述檔、24 個世界 NBT、40 份設定檔（JSON／JSON5／TOML）、20 個 .mca 區域檔（每檔最多 4 個區塊抽查）。設有單檔大小、解壓及 180 秒中止保護；不讀 playerdata、帳號檔，不顯示內容值、不上傳，也不修改遊戲。</p>
+              <label for="folder-file" data-i18n="folderChoose">選擇 .minecraft 資料夾</label>
               <input id="folder-file" type="file" webkitdirectory directory multiple aria-label="選擇 Minecraft 客戶端資料夾">
-              <button id="folder-cancel" type="button" hidden>取消掃描</button>
-              <p id="folder-progress" role="status" aria-live="polite">等待選擇資料夾；全程只在此裝置讀取。</p>
+              <button id="folder-cancel" type="button" hidden data-i18n="folderCancel">取消掃描</button>
+              <p id="folder-progress" role="status" aria-live="polite" data-i18n="folderWaiting">等待選擇資料夾；全程只在此裝置讀取。</p>
               <div id="folder-result" aria-live="polite"></div>
             </div>
 
-      <label for="log-input" class="sample-label">日誌文字內容</label>
-            <textarea id="log-input" spellcheck="false" aria-describedby="input-hint" placeholder="將 Minecraft latest.log 的錯誤內容貼到這裡"></textarea>
-            <p class="field-note" id="input-hint">直接貼上或選取檔案後分析；不會要求任何 IP、帳號、Token 或 Minecraft 登入資料。</p>
+      <label for="log-input" class="sample-label" data-i18n="logLabel">日誌文字內容</label>
+            <textarea id="log-input" spellcheck="false" aria-describedby="input-hint" placeholder="將 Minecraft latest.log 的錯誤內容貼到這裡" data-i18n-placeholder="textareaPlaceholder"></textarea>
+            <p class="field-note" id="input-hint" data-i18n="inputHint">直接貼上或選取檔案後分析；不會要求任何 IP、帳號、Token 或 Minecraft 登入資料。</p>
             <div class="actionrow">
-              <button type="button" class="primary" id="analyze-button">開始分析 →</button>
-              <button type="button" class="secondary" id="clear-button">清除</button>
+              <button type="button" class="primary" id="analyze-button" data-i18n="analyze">開始分析 →</button>
+              <button type="button" class="secondary" id="clear-button" data-i18n="clear">清除</button>
             </div>
           </div>
         </section>
         <section class="panel" aria-labelledby="result-title">
           <div class="panelheader">
-            <h2 id="result-title">02 / 圖騰的診斷線索</h2>
-            <p>顯示規則命中、證據行號與下一步；不猜測不存在的結果。</p>
-            <span class="headstatus" id="status">待分析</span>
+            <h2 id="result-title" data-i18n="resultTitle">02 / 圖騰的診斷線索</h2>
+            <p data-i18n="resultLead">顯示規則命中、證據行號與下一步；不猜測不存在的結果。</p>
+            <span class="headstatus" id="status" data-i18n="statusWaiting">待分析</span>
           </div>
           <div class="panelbody">
             <div id="result" aria-live="polite" aria-atomic="false"></div>
-            <p class="field-note">本工具是規則式<strong>初步診斷</strong>，不是 AI 全自動修復。未命中規則不代表沒有故障；不會執行模組、修改世界存檔或連上遊戲伺服器。</p>
+            <p class="field-note" data-i18n-html="resultNote">本工具是規則式<strong>初步診斷</strong>，不是 AI 全自動修復。未命中規則不代表沒有故障；不會執行模組、修改世界存檔或連上遊戲伺服器。</p>
           </div>
         </section>
       </div>
       <div class="below">
         <section class="info-card">
-          <h2>有趣的 Demo，背後有真實證據</h2>
-          <p>Waystones 缺少 Balm 的故障，團隊曾在獨立 NeoForge 沙箱修復缺失依賴並達成伺服器<strong>協定就緒</strong>。這不等於玩家已登入、傳送功能已驗收。</p>
-          <a class="linkbtn" href="https://github.com/j0935586110-lgtm/TotemOps/tree/main/evidence/final-acceptance-20261014">查看真實實驗證據 ↗</a>
+          <h2 data-i18n="evidenceTitle">有趣的 Demo，背後有真實證據</h2>
+          <p data-i18n-html="evidenceBody">Waystones 缺少 Balm 的故障，團隊曾在獨立 NeoForge 沙箱修復缺失依賴並達成伺服器<strong>協定就緒</strong>。這不等於玩家已登入、傳送功能已驗收。</p>
+          <a class="linkbtn" href="https://github.com/j0935586110-lgtm/TotemOps/tree/main/evidence/final-acceptance-20261014" data-i18n="evidenceLink">查看真實實驗證據 ↗</a>
         </section>
         <section class="info-card">
-          <h2>安全與隱私是預設值</h2>
+          <h2 data-i18n="privacyTitle">安全與隱私是預設值</h2>
           <ul>
-            <li>本頁沒有後端、追蹤碼、API 呼叫或帳號登入。</li>
-            <li>分析在瀏覽器本機完成；公開分享日誌前仍應自行移除 IP、個資及金鑰。</li>
-            <li>若診斷無法解決問題，可使用既有 GitHub Issues 回報已去識別化的重現資訊。</li>
+            <li data-i18n="privacy1">本頁沒有後端、追蹤碼、API 呼叫或帳號登入。</li>
+            <li data-i18n="privacy2">分析在瀏覽器本機完成；公開分享日誌前仍應自行移除 IP、個資及金鑰。</li>
+            <li data-i18n="privacy3">若診斷無法解決問題，可使用既有 GitHub Issues 回報已去識別化的重現資訊。</li>
           </ul>
-          <a class="linkbtn" href="https://github.com/j0935586110-lgtm/TotemOps/issues">前往 GitHub Issues ↗</a>
+          <a class="linkbtn" href="https://github.com/j0935586110-lgtm/TotemOps/issues" data-i18n="privacyLink">前往 GitHub Issues ↗</a>
         </section>
       </div>
     </div>
   </main>
-  <footer><div class="wrap">TotemOps 不死圖騰 · Apache-2.0 開源工具 · 非 Mojang／Microsoft 官方產品。<br>使用者資料不會被此網頁傳送，但若安裝第三方瀏覽器擴充套件，仍應自行評估其存取權限。</div></footer>
+  <footer><div class="wrap" data-i18n-html="footer">TotemOps 不死圖騰 · Apache-2.0 開源工具 · 非 Mojang／Microsoft 官方產品。<br>使用者資料不會被此網頁傳送，但若安裝第三方瀏覽器擴充套件，仍應自行評估其存取權限。</div></footer>
 </body>
 </html>

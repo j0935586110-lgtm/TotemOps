@@ -7,18 +7,13 @@
 <meta name="description" content="TotemOps 不死圖騰：給 Claude Code、Google Antigravity、OpenCode 的 Minecraft 伺服器診斷 Skill。Clone 倉庫、讀取 Skill、用三個 CLI 指令取得精簡 JSON。">
 <link rel="canonical" href="https://j0935586110-lgtm.github.io/TotemOps/start.html">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/site-header.css">
 <title>開發者快速開始｜TotemOps 不死圖騰</title>
 <style>
 :root{color-scheme:dark;--bg:#081522;--panel:#102638;--panel2:#0b2030;--line:#2e5060;--mint:#6bf4bd;--white:#eef7f8;--muted:#abc2d0;--amber:#fbd5a0}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 85% -12%,#145348 0,transparent 38%),linear-gradient(150deg,#081522,#0d1f30 62%,#0b2630);color:var(--white);font:16px/1.72 system-ui,-apple-system,"Noto Sans TC","PingFang TC",sans-serif}
 a{color:var(--mint)}a:hover{color:#a9ffdc}button{font:inherit;cursor:pointer}
 .wrap{width:min(1060px,calc(100% - 34px));margin:auto}
-nav{min-height:72px;border-bottom:1px solid #46677866;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 0}
-.brand{font-size:1.14rem;font-weight:800;letter-spacing:-.02em;text-decoration:none;color:#efffff}
-.links{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:.93rem}.links a{text-decoration:none}
-.lang{border:1px solid var(--line);padding:3px;border-radius:10px;display:inline-flex;gap:4px}
-.lang button{border:0;border-radius:7px;background:transparent;color:var(--muted);padding:3px 11px;font-weight:650}
-.lang button[aria-pressed=true]{background:var(--mint);color:#082d2c}
 main{padding-bottom:65px}.hero{padding:72px 0 35px}.eyebrow{color:var(--mint);text-transform:uppercase;font-size:.77rem;font-weight:900;letter-spacing:.18em;margin:0 0 14px}
 h1{font-size:clamp(2.25rem,5.2vw,4rem);line-height:1.18;letter-spacing:-.04em;margin:0 0 20px}
 h1 em{color:var(--mint);font-style:normal}
@@ -38,23 +33,28 @@ section{margin-top:39px}.section-head{font-size:1.6rem;line-height:1.3;letter-sp
 footer{border-top:1px solid var(--line);padding:25px 0;color:var(--muted);font-size:.85rem}
 html[lang="zh-Hant"] .en,html[lang="en"] .zh{display:none!important}
 :focus-visible{outline:3px solid #9bf8cc;outline-offset:3px}
-@media(max-width:800px){.grid{grid-template-columns:1fr}.hero{padding-top:48px}.panel{padding:20px}.links{gap:10px}}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.hero{padding-top:48px}.panel{padding:20px}}
 </style>
 </head>
-<body>
+<body data-page="start">
+<header class="totem-header">
+    <div class="totem-header-wrap totem-header-inside">
+      <a href="index.html" class="totem-brand"><span class="totem-brand-mark" aria-hidden="true">✦</span><span>TotemOps <span class="totem-brand-sub">不死圖騰</span></span></a>
+      <nav class="totem-nav" aria-label="Site navigation / 網站導覽">
+        <a href="index.html" data-i18n="home">首頁</a>
+        <a href="diagnose.html" data-i18n="navTry">免費分析日誌</a>
+        <a href="index.html#pain" data-i18n="navPain">解決什麼</a>
+        <a href="index.html#how" data-i18n="navHow">怎麼運作</a>
+        <a href="index.html#status" data-i18n="navStatus">做到哪裡</a>
+        <a href="index.html#start" aria-current="page" data-i18n="navStart">開始使用</a>
+      </nav>
+      <div class="totem-language" role="group" aria-label="Language / 語言">
+        <button type="button" data-select-language="zh" aria-pressed="true" lang="zh-Hant" aria-label="切換繁體中文">中文</button>
+        <button type="button" data-select-language="en" aria-pressed="false" lang="en" aria-label="Switch to English">English</button>
+      </div>
+    </div>
+  </header>
 <div class="wrap">
-<nav aria-label="Navigation">
-<a class="brand" href="index.html">✦ TotemOps / 不死圖騰</a>
-<div class="links">
-<a href="index.html"><span class="zh">首頁</span><span class="en">Home</span></a>
-<a href="diagnose.html"><span class="zh">免費日誌分析</span><span class="en">Try log analyzer</span></a>
-<a href="https://github.com/j0935586110-lgtm/TotemOps">GitHub ↗</a>
-<div class="lang" role="group" aria-label="Language">
-<button id="zh" type="button" aria-pressed="true" aria-label="繁體中文">中文</button>
-<button id="en" type="button" aria-pressed="false" aria-label="English">EN</button>
-</div>
-</div>
-</nav>
 <main>
 <header class="hero">
 <p class="eyebrow">Open source · Agent skills · Minecraft</p>
@@ -147,21 +147,6 @@ cd TotemOps</pre></li>
 </main>
 <footer><span class="zh">TotemOps 不死圖騰 · Apache-2.0 · 非 Mojang／Microsoft 官方工具</span><span class="en">TotemOps · Apache-2.0 · Unofficial Minecraft community tool</span></footer>
 </div>
-<script>
-(function(){
-"use strict";
-var zh=document.getElementById("zh"),en=document.getElementById("en");
-function apply(lang){
-lang=lang==="en"?"en":"zh-Hant";
-document.documentElement.lang=lang;
-zh.setAttribute("aria-pressed",String(lang!=="en"));
-en.setAttribute("aria-pressed",String(lang==="en"));
-document.title=lang==="en"?"Get started · TotemOps Agent Skills":"開發者快速開始｜TotemOps 不死圖騰";
-}
-zh.addEventListener("click",function(){apply("zh-Hant")});
-en.addEventListener("click",function(){apply("en")});
-var requested=new URLSearchParams(window.location.search).get("lang");
-if(requested==="en")apply("en");
-})();
-</script>
+<script src="assets/site-i18n.js" defer></script>
+<script src="assets/site-header.js" defer></script>
 </body></html>
