@@ -36,9 +36,10 @@ class SiteAndOnboardingTests(unittest.TestCase):
 
     def test_home_has_local_quickstart_link_and_translation(self):
         html=(DOCS/"index.html").read_text(encoding="utf-8")
+        dictionary=(DOCS/"assets/site-i18n.js").read_text(encoding="utf-8")
         self.assertIn('href="start.html"',html)
-        self.assertIn('footerDev:"開發者文件"',html)
-        self.assertIn('footerDev:"Developer docs"',html)
+        self.assertIn('"home.footerDev": "開發者文件"',dictionary)
+        self.assertIn('"home.footerDev": "Developer docs"',dictionary)
         self.assertNotIn('data-i18n="navSkill"',html)
         self.assertNotIn('data-i18n="btnSkill"',html)
         self.assertEqual(html.count('href="start.html"'),1)

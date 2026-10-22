@@ -1,0 +1,383 @@
+#!/usr/bin/env python3
+"""Generate docs/assets/site-i18n.js.
+
+Source of truth for zh keys: the existing docs/index.html dictionary (moved
+verbatim) plus the strings authored here for diagnose.html and start.html.
+Output format is deliberately flat ("page.key": "value") so tests can parse it.
+"""
+import json
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# Home-page copy (migrated out of the old inline index.html dictionary so the
+# generator is the single source of truth; site-i18n.js is a build artifact).
+HOME_ZH = {
+    "skip": "跳到主要內容",
+    "eyebrow": "開源工具 · Minecraft 故障診斷",
+    "headline1": "Minecraft 出問題？",
+    "headline2": "先找原因，再安全處理。",
+    "lead": "不死圖騰幫服主看懂崩潰日誌、檢查模組依賴、了解更新風險。讓你少翻文件、少靠猜，真正要修改之前先看證據。",
+    "uploadTitle": "把 latest.log 直接拖到這裡",
+    "uploadHint": "最大 64 MiB，瀏覽器本機分析，不上傳、不需登入",
+    "uploadChoose": "選擇日誌檔案",
+    "uploadNote": "單檔支援 .log／.txt；JAR 和 NBT 請使用下方資料夾掃描",
+    "uploadStatus": "等待檔案",
+    "folderTitle": "排查整個 .minecraft 資料夾",
+    "folderHint": "可選擇約 1.5 GB 的資料夾：先建立清單，限量檢查日誌、模組依賴、世界 NBT、區域檔 .mca 與設定檔 JSON／JSON5／TOML；不讀玩家／帳號資料，不顯示設定值，也不會上傳。",
+    "folderChoose": "選擇 .minecraft 資料夾",
+    "folderCancel": "取消掃描",
+    "folderWaiting": "等待選擇資料夾；全程只在此裝置讀取。",
+    "btnTry": "免費分析 latest.log →",
+    "btnRepo": "查看開源專案 ↗",
+    "startTry": "免安裝，立即體驗日誌診斷 →",
+    "btnRelease": "下載 Alpha 原始碼 ↗",
+    "alert": "⚠️ 目前是 Alpha 預覽版：可唯讀分析及做部分授權沙箱測試，但不能保證自動修好所有問題，也不是玩家用的一鍵遊戲安裝器。",
+    "heroCaption": "原創示意插畫，非 Minecraft 遊戲截圖",
+    "painKicker": "使用者痛點",
+    "painTitle": "你是不是也遇過這些麻煩？",
+    "painLead": "不想再一個個猜是什麼模組壞了、更新會不會讓整台伺服器不能玩？先從最常見的問題開始。",
+    "p1Title": "伺服器突然開不了",
+    "p1Body": "很長的錯誤日誌不知道看哪裡？幫你挑出關鍵錯誤，給出下一步檢查方向。",
+    "p2Title": "模組一直衝突",
+    "p2Body": "找出模組宣告的前置依賴、版本問題與相容性線索，不用只靠猜。",
+    "p3Title": "不敢隨便更新",
+    "p3Body": "先檢查更新包內容和風險，再決定是否發布，不直接替你改檔案。",
+    "p4Title": "想加玩法卻不知裝什麼",
+    "p4Body": "依 Minecraft 與 Loader 版本找到候選模組及前置需求；整套能不能跑還需要驗證。",
+    "p5Title": "寫模組、修版本很花時間",
+    "p5Body": "協助開發者閱讀程式庫、檢查 Forge／NeoForge 差異，配合原本的 CI 測試。",
+    "p6Title": "新玩家老是裝不好",
+    "p6Body": "協助檢查教學、啟動器與更新流程；真正的雙擊安裝後直接遊玩還在規劃。",
+    "available": "已可使用",
+    "partial": "部分可用",
+    "planning": "持續開發",
+    "howKicker": "處理流程",
+    "howTitle": "先找問題，再決定要不要修",
+    "howLead": "不需要把正式世界交給 AI。你可以只請它分析日誌，等有需要且你同意，才在隔離沙箱測試。",
+    "step1Title": "① 看線索",
+    "step1Body": "讀取日誌、模組檔案和目前版本。",
+    "step2Title": "② 查相依",
+    "step2Body": "比對已知前置模組及版本限制。",
+    "step3Title": "③ 沙箱試修（可選）",
+    "step3Body": "在獨立測試環境驗證，不修改正式玩家世界。",
+    "step4Title": "④ 告訴你結果",
+    "step4Body": "交付有證據的報告；正式修改由服主決定。",
+    "notMagicTitle": "不是什麼神奇黑盒子",
+    "notMagicBody": "它把 Python 分析、模組資料、已知版本資訊、可選 AI 和既有 Minecraft 工具串在一起。AI 負責解釋，檔案驗證和測試結果要靠工具確認。",
+    "notMagicDetail": "你不必換掉原有的 Minecraft 啟動器、同步器或管理面板；也不必先申請付費 AI 帳號才能跑基本分析。",
+    "advanced": "想看進階技術說明 →",
+    "workflowCaption": "流程示意：真實沙箱測試只會在符合條件並取得授權後執行",
+    "proofKicker": "真實測試",
+    "proofTitle": "真的測過的一個案例",
+    "proofHeading": "Waystones 無法開服 → 發現缺少 Balm",
+    "proofBody": "在 Minecraft 1.21.1／NeoForge 21.1.259 的一次性沙箱中，移除必要前置 Balm 後，伺服器真的報錯；加入已校驗的 Balm，再次啟動後通過 Minecraft 協定就緒檢查。",
+    "proofLimit": "注意：這證明該次伺服器能回應協定，不代表玩家登入、傳送功能或所有模組都已通過測試。其餘五類是合成日誌辨識測試，不是五次真實修復。",
+    "proofLink": "查看測試證據 →",
+    "statusKicker": "目前狀態",
+    "statusTitle": "做到哪裡？哪些還沒做？",
+    "statusReady": "✓ 目前能用",
+    "statusNotReady": "⌛ 還不能保證",
+    "yes1": "錯誤日誌與模組資料的唯讀分析",
+    "yes2": "模組前置依賴及指定版本候選查詢",
+    "yes3": "部分模組檔案校驗與獨立沙箱實測",
+    "yes4": "可選插件、開發者 AI Skill 與更新包審查",
+    "no1": "任何崩潰都能自動修復",
+    "no2": "所有模組組合 100% 相容",
+    "no3": "正式世界的自動備份與完整回滾",
+    "no4": "下載 Setup.exe 後雙擊直接進服",
+    "startKicker": "開始使用",
+    "startTitle": "先用最簡單的方法試試",
+    "startLead": "適合會開終端機的服主或開發者。基本唯讀功能不用 Docker、Java 遊戲伺服器或 AI API Key；需要 Python 3.11+。",
+    "install1": "① 取得原始碼",
+    "install1Note": "從 GitHub 取得開源 Alpha 版。",
+    "install2": "② 準備 Python",
+    "install2Note": "Windows 可以使用 py -3 代替 python3。",
+    "install3": "③ 分析錯誤日誌",
+    "install3Note": "把 latest.log 改成你自己的日誌路徑，分析不會修改伺服器。",
+    "guide": "閱讀中文使用說明 ↗",
+    "issues": "回報你遇到的問題 ↗",
+    "footerGithub": "GitHub 原始碼",
+    "footerDev": "開發者文件",
+    "footerSecurity": "安全政策",
+    "footerLicense": "Apache-2.0 授權",
+    "footerDisclaimer": "非官方 Minecraft 社群工具，與 Mojang Studios、Microsoft 無關。插畫為原創示意，並非遊戲畫面。第三方模組及遊戲資產各自保有其權利。",
+    "metaDescription": "不死圖騰 TotemOps 是免費開源 Minecraft 伺服器故障診斷工具。立即在瀏覽器本機分析 latest.log，查找前置模組、Java、Mixin 及記憶體錯誤，免登入、不上傳檔案。"
+}
+HOME_EN = {
+    "skip": "Skip to main content",
+    "eyebrow": "OPEN SOURCE · MINECRAFT TROUBLESHOOTING",
+    "headline1": "Minecraft not working?",
+    "headline2": "Find the cause. Fix with evidence.",
+    "lead": "TotemOps helps server owners understand crash logs, inspect mod dependencies and review risky updates. Spend less time guessing and more time on what actually matters.",
+    "uploadTitle": "Drop latest.log here",
+    "uploadHint": "Up to 64 MiB, analyzed in your browser; no upload or login",
+    "uploadChoose": "Choose log file",
+    "uploadNote": "Single-file mode supports .log/.txt; use folder scan for JAR and NBT",
+    "uploadStatus": "Waiting for a file",
+    "folderTitle": "Inspect the entire .minecraft folder",
+    "folderHint": "For folders around 1.5 GB, index file names first, then selectively inspect logs, mod dependencies, NBT data, Anvil .mca regions and JSON/JSON5/TOML configs. Player and account files are skipped; private values are never displayed or uploaded.",
+    "folderChoose": "Choose .minecraft folder",
+    "folderCancel": "Cancel scan",
+    "folderWaiting": "Choose a folder to start; files stay on this device.",
+    "btnTry": "Analyze latest.log for free →",
+    "btnRepo": "Explore on GitHub ↗",
+    "startTry": "Try log analysis in your browser →",
+    "btnRelease": "Get Alpha source ↗",
+    "alert": "⚠️ Alpha preview: read-only inspection and selected authorized sandbox tests are available. It does NOT guarantee automatic repairs or provide a playable one-click Minecraft game installer.",
+    "heroCaption": "Original concept illustration, not a captured Minecraft gameplay screenshot",
+    "painKicker": "COMMON PROBLEMS",
+    "painTitle": "Have you run into these problems?",
+    "painLead": "No more guessing which mod broke or whether an update will knock the server offline. Start with the evidence.",
+    "p1Title": "Server won't start",
+    "p1Body": "Logs are huge and cryptic. Pull out key errors and find what to investigate next.",
+    "p2Title": "Mods don't work together",
+    "p2Body": "See declared missing dependencies, version limitations and compatibility clues.",
+    "p3Title": "Updates feel risky",
+    "p3Body": "Review what an update package changes before you decide to publish it. No automatic file edits.",
+    "p4Title": "Which mod adds the feature I want?",
+    "p4Body": "Search mod candidates by Minecraft and loader version; full compatibility still needs testing.",
+    "p5Title": "Maintaining mods takes forever",
+    "p5Body": "Help developers inspect repositories, Forge/NeoForge differences and existing CI results.",
+    "p6Title": "New players struggle with setup",
+    "p6Body": "Review onboarding and update workflows. A true double-click-and-play installer is still future work.",
+    "available": "Available",
+    "partial": "Partially available",
+    "planning": "In development",
+    "howKicker": "HOW IT WORKS",
+    "howTitle": "Investigate first. Change only with approval.",
+    "howLead": "You do not need to hand your production world to AI. Start with read-only logs; an isolated sandbox test is optional and owner-authorized.",
+    "step1Title": "① Read clues",
+    "step1Body": "Inspect logs, mod metadata and versions.",
+    "step2Title": "② Check dependencies",
+    "step2Body": "Compare known requirements and version constraints.",
+    "step3Title": "③ Test in sandbox (optional)",
+    "step3Body": "Verify in a disposable environment, not in a live player world.",
+    "step4Title": "④ Share findings",
+    "step4Body": "Show evidence; the server owner decides whether to change anything.",
+    "notMagicTitle": "No black-box magic",
+    "notMagicBody": "TotemOps combines lightweight Python inspection, version metadata, optional AI and established Minecraft tools. AI explains the findings, while file hashes and real test results supply the evidence.",
+    "notMagicDetail": "You don't have to replace your existing launcher, updater, or hosting panel. Basic local diagnostics don't require a paid AI account.",
+    "advanced": "Read the technical guide →",
+    "workflowCaption": "Concept workflow: actual sandbox tests require an authorized, suitable environment",
+    "proofKicker": "REAL TEST",
+    "proofTitle": "A real case we reproduced",
+    "proofHeading": "Waystones fails to start → missing Balm identified",
+    "proofBody": "In a disposable Minecraft 1.21.1 / NeoForge 21.1.259 server, removing the required Balm dependency produced a real server error. Restoring a verified Balm package allowed the server to pass a Minecraft protocol-readiness check.",
+    "proofLimit": "This proves only protocol readiness in that specific run—not in-game gameplay, authentication or universal compatibility. Five other fault categories were synthetic-log tests, not five live repairs.",
+    "proofLink": "See the evidence →",
+    "statusKicker": "HONEST STATUS",
+    "statusTitle": "What works, and what doesn't yet?",
+    "statusReady": "✓ Available today",
+    "statusNotReady": "⌛ Not yet guaranteed",
+    "yes1": "Read-only crash log and mod metadata analysis",
+    "yes2": "Declared dependencies and exact-version candidate lookup",
+    "yes3": "Selected checksum and disposable sandbox experiments",
+    "yes4": "Opt-in plugins, agent skills and release package review",
+    "no1": "Autonomous repair of every crash",
+    "no2": "100% compatibility for arbitrary mod collections",
+    "no3": "Automated production backups and complete world rollback",
+    "no4": "Playable double-click-and-join Setup.exe",
+    "startKicker": "GET STARTED",
+    "startTitle": "Try the simplest workflow",
+    "startLead": "For server owners and developers comfortable with a terminal. Local read-only inspection needs no Docker, Java server or AI API key; Python 3.11+ is required.",
+    "install1": "① Clone the source",
+    "install1Note": "Get the open-source Alpha preview from GitHub.",
+    "install2": "② Prepare Python",
+    "install2Note": "On Windows, use py -3 instead of python3.",
+    "install3": "③ Diagnose a log",
+    "install3Note": "Replace latest.log with your actual path; diagnosis won't modify the server.",
+    "guide": "Read the English guide ↗",
+    "issues": "Report a problem ↗",
+    "footerGithub": "GitHub source",
+    "footerDev": "Developer docs",
+    "footerSecurity": "Security policy",
+    "footerLicense": "Apache-2.0 license",
+    "footerDisclaimer": "An unofficial Minecraft community tool, not affiliated with Mojang Studios or Microsoft. Illustrations are original concept art, not game screenshots. All third-party assets retain their respective licenses.",
+    "metaDescription": "TotemOps helps server owners understand crash logs, inspect mod dependencies and review risky updates. Spend less time guessing and more time on what actually matters."
+}
+home_zh = dict(HOME_ZH)
+home_en = dict(HOME_EN)
+
+common_zh = {
+    "home": "首頁",
+    "navTry": "免費分析日誌",
+    "navPain": "解決什麼",
+    "navHow": "怎麼運作",
+    "navStatus": "做到哪裡",
+    "navStart": "開始使用",
+    "skip": "跳至主要內容",
+}
+common_en = {
+    "home": "Home",
+    "navTry": "Try log analyzer",
+    "navPain": "Problems solved",
+    "navHow": "How it works",
+    "navStatus": "Current status",
+    "navStart": "Get started",
+    "skip": "Skip to main content",
+}
+
+diag_zh = {
+    "metaDescription": "免費 Minecraft 伺服器日誌初步診斷：在你的瀏覽器本機分析 latest.log、模組依賴、Java、Mixin 與記憶體錯誤。免註冊、不上傳檔案、不使用 AI API。",
+    "eyebrow": "FREE LOCAL CRASH TRIAGE · 開源免費",
+    "headline": "Minecraft 出錯了？",
+    "headlineAccent": "讓圖騰找出線索。",
+    "lead": "貼上或拖入伺服器的 <code>latest.log</code>，立即檢查可能的相依模組、Java、Mixin、記憶體等問題。先看證據，再決定怎麼修。",
+    "tagNoLogin": "不需登入",
+    "tagNoUpload": "不上傳日誌",
+    "tagNoTokens": "不消耗 AI Token",
+    "tagNoInstall": "零安裝",
+    "inputTitle": "01 / 給圖騰一條線索",
+    "inputLead": "先點範例試玩，或讀取你自己的錯誤日誌。",
+    "sampleLabel": "試玩範例（日誌為示意資料）",
+    "sampleGroup": "選擇範例",
+    "sampleMissing": "缺少前置模組",
+    "sampleMixin": "Mixin 衝突",
+    "sampleMemory": "記憶體不足",
+    "sampleClean": "無規則命中",
+    "dropTitle": "將 latest.log 拖曳到這裡",
+    "dropHint": "只在瀏覽器記憶體中讀取，檔案大小上限 64 MiB，分段在本機分析",
+    "dropChoose": "或選擇本機文字檔",
+    "fileInputLabel": "讀取本機 Minecraft 錯誤日誌",
+    "folderTitle": "進階：排查整個 .minecraft 資料夾",
+    "folderHint": "資料夾可達 1.5 GB：先索引檔案名稱，選讀最多 4 份日誌、350 個模組 JAR 描述檔、24 個世界 NBT、40 份設定檔（JSON／JSON5／TOML）、20 個 .mca 區域檔（每檔最多 4 個區塊抽查）。設有單檔大小、解壓及 180 秒中止保護；不讀 playerdata、帳號檔，不顯示內容值、不上傳，也不修改遊戲。",
+    "folderChoose": "選擇 .minecraft 資料夾",
+    "folderCancel": "取消掃描",
+    "folderWaiting": "等待選擇資料夾；全程只在此裝置讀取。",
+    "logLabel": "日誌文字內容",
+    "textareaPlaceholder": "將 Minecraft latest.log 的錯誤內容貼到這裡",
+    "inputHint": "直接貼上或選取檔案後分析；不會要求任何 IP、帳號、Token 或 Minecraft 登入資料。",
+    "analyze": "開始分析 →",
+    "resultPlaceholder": "選擇或拖入 latest.log，診斷結果會顯示在這裡。",
+    "clear": "清除",
+    "resultTitle": "02 / 圖騰的診斷線索",
+    "resultLead": "顯示規則命中、證據行號與下一步；不猜測不存在的結果。",
+    "statusWaiting": "待分析",
+    "resultNote": "本工具是規則式<strong>初步診斷</strong>，不是 AI 全自動修復。未命中規則不代表沒有故障；不會執行模組、修改世界存檔或連上遊戲伺服器。",
+    "evidenceTitle": "有趣的 Demo，背後有真實證據",
+    "evidenceBody": "Waystones 缺少 Balm 的故障，團隊曾在獨立 NeoForge 沙箱修復缺失依賴並達成伺服器<strong>協定就緒</strong>。這不等於玩家已登入、傳送功能已驗收。",
+    "evidenceLink": "查看真實實驗證據 ↗",
+    "privacyTitle": "安全與隱私是預設值",
+    "privacy1": "本頁沒有後端、追蹤碼、API 呼叫或帳號登入。",
+    "privacy2": "分析在瀏覽器本機完成；公開分享日誌前仍應自行移除 IP、個資及金鑰。",
+    "privacy3": "若診斷無法解決問題，可使用既有 GitHub Issues 回報已去識別化的重現資訊。",
+    "privacyLink": "前往 GitHub Issues ↗",
+    "footer": "TotemOps 不死圖騰 · Apache-2.0 開源工具 · 非 Mojang／Microsoft 官方產品。<br>使用者資料不會被此網頁傳送，但若安裝第三方瀏覽器擴充套件，仍應自行評估其存取權限。",
+    "backHome": "← 返回首頁",
+}
+
+diag_en = {
+    "metaDescription": "Free preliminary Minecraft server log triage: inspect latest.log, mod dependencies, Java, Mixin and memory errors locally in your browser. No sign-up, no uploads, no AI API.",
+    "eyebrow": "FREE LOCAL CRASH TRIAGE · OPEN SOURCE",
+    "headline": "Minecraft broke?",
+    "headlineAccent": "Let the totem find the clues.",
+    "lead": "Paste or drop your server's <code>latest.log</code> to check for dependency, Java, Mixin and memory problems. Look at the evidence before you change anything.",
+    "tagNoLogin": "No sign-up",
+    "tagNoUpload": "Logs never uploaded",
+    "tagNoTokens": "No AI tokens spent",
+    "tagNoInstall": "Nothing to install",
+    "inputTitle": "01 / Give the totem a clue",
+    "inputLead": "Try a sample first, or load your own crash log.",
+    "sampleLabel": "Sample logs (illustrative data)",
+    "sampleGroup": "Choose a sample",
+    "sampleMissing": "Missing required mod",
+    "sampleMixin": "Mixin conflict",
+    "sampleMemory": "Out of memory",
+    "sampleClean": "No rule matched",
+    "dropTitle": "Drop latest.log here",
+    "dropHint": "Read in browser memory only; 64 MiB limit, analyzed locally in chunks",
+    "dropChoose": "Or choose a local text file",
+    "fileInputLabel": "Load a local Minecraft crash log",
+    "folderTitle": "Advanced: inspect the whole .minecraft folder",
+    "folderHint": "Folders can reach 1.5 GB: file names are indexed first, then up to 4 logs, 350 mod JAR descriptors, 24 world NBT files, 40 config files (JSON/JSON5/TOML) and 20 .mca region files (up to 4 sampled chunks each) are read. Per-file size caps, decompression limits and a 180-second abort apply. Player data and account files are skipped; values are never displayed or uploaded, and the game is never modified.",
+    "folderChoose": "Choose .minecraft folder",
+    "folderCancel": "Cancel scan",
+    "folderWaiting": "Waiting for a folder; everything stays on this device.",
+    "logLabel": "Log text",
+    "textareaPlaceholder": "Paste the error output from Minecraft latest.log here",
+    "inputHint": "Paste directly or pick a file, then analyze. It never asks for IPs, accounts, tokens or Minecraft credentials.",
+    "analyze": "Analyze →",
+    "resultPlaceholder": "Choose or drop latest.log and the diagnosis will appear here.",
+    "clear": "Clear",
+    "resultTitle": "02 / The totem's clues",
+    "resultLead": "Shows rule matches, evidence line numbers and next steps. Never invents findings.",
+    "statusWaiting": "Ready",
+    "resultNote": "This is a rule-based <strong>preliminary triage</strong>, not autonomous AI repair. A missing match does not prove the server is healthy. It never runs mods, edits worlds or connects to your game server.",
+    "evidenceTitle": "A fun demo backed by real evidence",
+    "evidenceBody": "For the Waystones-missing-Balm fault, the team restored the dependency in an isolated NeoForge sandbox until the server reached <strong>protocol readiness</strong>. That is not proof that a player joined or that teleporting works.",
+    "evidenceLink": "See the real test evidence ↗",
+    "privacyTitle": "Safety and privacy are the default",
+    "privacy1": "No backend, tracking code, API calls or account login on this page.",
+    "privacy2": "Analysis runs locally in your browser; still remove IPs, personal data and keys before sharing a log publicly.",
+    "privacy3": "If triage is not enough, report de-identified reproduction details in the existing GitHub Issues.",
+    "privacyLink": "Open GitHub Issues ↗",
+    "footer": "TotemOps · Apache-2.0 open source · Unofficial, not affiliated with Mojang or Microsoft.<br>This page never transmits your data, but review the permissions of any third-party browser extension you install.",
+    "backHome": "← Back to home",
+}
+
+start_zh = {
+    "metaDescription": "TotemOps 不死圖騰：給 Claude Code、Google Antigravity、OpenCode 的 Minecraft 伺服器診斷 Skill。Clone 倉庫、讀取 Skill、用三個 CLI 指令取得精簡 JSON。",
+}
+start_en = {
+    "metaDescription": "TotemOps: a Minecraft server triage Skill for Claude Code, Google Antigravity and OpenCode. Clone the repo, read the Skill, and get compact JSON from three CLI commands.",
+}
+
+titles = {
+    "zh": {
+        "home": "不死圖騰 TotemOps — Minecraft 出問題，先找原因",
+        "diag": "Minecraft 錯誤日誌免費分析｜不死圖騰 TotemOps",
+        "start": "開發者快速開始｜TotemOps 不死圖騰",
+    },
+    "en": {
+        "home": "TotemOps — Minecraft troubleshooting with evidence",
+        "diag": "Free Minecraft crash log analyzer · TotemOps",
+        "start": "Get started · TotemOps Agent Skills",
+    },
+}
+
+
+def flat(prefix: str, data: dict) -> dict:
+    return {f"{prefix}.{k}": v for k, v in data.items()}
+
+
+zh = {}
+zh.update(flat("common", common_zh))
+zh.update(flat("home", home_zh))
+zh.update(flat("diag", diag_zh))
+zh.update(flat("start", start_zh))
+en = {}
+en.update(flat("common", common_en))
+en.update(flat("home", home_en))
+en.update(flat("diag", diag_en))
+en.update(flat("start", start_en))
+
+assert set(zh) == set(en), (
+    f"zh/en key mismatch: zh-only={sorted(set(zh) - set(en))} en-only={sorted(set(en) - set(zh))}"
+)
+
+out = [
+    "/* TotemOps shared translations (zh-Hant / en).",
+    "   Flat \"page.key\" namespaces; docs/assets/site-header.js resolves a page key",
+    "   first, then falls back to the shared \"common.*\" namespace.",
+    "   Generated by tools/build_site_i18n.py — do not hand-edit without rerunning it. */",
+    "window.TOTEM_I18N = {",
+]
+for name, table in (("zh", zh), ("en", en)):
+    out.append(f"  {name}: {{")
+    for key in sorted(table):
+        out.append(f"    {json.dumps(key)}: {json.dumps(table[key], ensure_ascii=False)},")
+    out.append("  },")
+out.append("  titles: {")
+for lang in ("zh", "en"):
+    out.append(f"    {lang}: {{")
+    for page in ("home", "diag", "start"):
+        out.append(f"      {json.dumps(page)}: {json.dumps(titles[lang][page], ensure_ascii=False)},")
+    out.append("    },")
+out.append("  }")
+out.append("};")
+
+target = ROOT / "docs/assets/site-i18n.js"
+target.write_text("\n".join(out) + "\n", encoding="utf-8")
+print(f"wrote {target} keys={len(zh)}")

@@ -438,6 +438,10 @@
   if (document.querySelector("[data-sample]")) setSample(activeSample);
   else {
     clearChildren(result);
-    result.appendChild(node("p", "選擇或拖入 latest.log，診斷結果會顯示在這裡。", "result-info"));
+    var placeholderText = (window.TOTEM_TRANSLATE && window.TOTEM_TRANSLATE("diag.resultPlaceholder")) ||
+      "選擇或拖入 latest.log，診斷結果會顯示在這裡。";
+    var placeholder = node("p", placeholderText, "result-info");
+    placeholder.setAttribute("data-i18n", "diag.resultPlaceholder");
+    result.appendChild(placeholder);
   }
 })(typeof globalThis === "object" ? globalThis : this);
